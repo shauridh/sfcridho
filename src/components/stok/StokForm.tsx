@@ -1,0 +1,238 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { BahanBaku, KATEGORI_BAHAN, SATUAN_OPTIONS, SATUAN_LABELS } from "@/lib/types";
+import { X, ArrowRight } from "lucide-react";
+
+interface Props {
+  initial: BahanBaku | null;
+  onClose: () => void;
+  onSave: (data: Omit<BahanBaku, "id" | "created_at">) => Promise<void>;
+}
+
+function renderSatuanSelect(
+  value: string,
+  onChange: (v: string) => void,
+  required: boolean,
+  placeholder: string
+) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      required={required}
+      className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent"
+    >
+      <option value="">{placeholder}</option>
+      {Object.entries(SATUAN_OPTIONS).map(([key, options]) => (
+        <optgroup key={key} label={SATUAN_LABELS[key as keyof typeof SATUAN_LABELS]}>
+          {options.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  );
+}
+
+export default function StokForm({ initial, onClose, onSave }: Props) {
+  const [nama, setNama] = useState(initial?.nama || "");
+  const [kategori, setKategori] = useState(initial?.kategori || "Lainnya");
+  const [satBeli, setSatBeli] = useState(initial?.sat_beli || "");
+  const [isiPerPak, setIsiPerPak] = useState(initial?.isi_per_pak?.toString() || "");
+  const [satDasar, setSatDasar] = useState(initial?.sat_dasar || "");
+  const [stokAwalBeli, setStokAwalBeli] = useState(
+    initial && initial.isi_per_pak > 0
+      ? (initial.stok / initial.isi_per_pak).toString()
+      : "0"
+  );
+  const [reorderPoint, setReorderPoint] = useState(initial?.reorder_point?.toString() || "");
+  const [hargaBeli, setHargaBeli] = useState(initial?.harga_beli?.toString() || "");
+  const [saving, setSaving] = useState(false);
+
+  const stokDasar = useMemo(() => {
+    const beli = parseFloat(stokAwalBeli) || 0;
+    const isi = parseFloat(isiPerPak) || 0;
+    return Math.round(beli * isi * 100) / 100;
+  }, [stokAwalBeli, isiPerPak]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    await onSave({
+      nama,
+      kategori,
+      sat_beli: satBeli,
+      isi_per_pak: parseFloat(isiPerPak) || 0,
+      sat_dasar: satDasar,
+      stok: stokDasar,
+      reorder_point: parseFloat(reorderPoint) || 0,
+      harga_beli: parseInt(hargaBeli) || 0,
+    });
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="th-card border th-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <h2 className="text-lg font-bold th-text">
+            {initial ? "Edit Bahan Baku" : "Tambah Bahan Baku"}
+          </h2>
+          <button onClick={onClose} className="p-2 th-muted hover:th-text rounded-lg">
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">
+              Nama Bahan
+            </label>
+            <input
+              type="text"
+              value={nama}
+              onChange={(e) => setNama(e.target.value)}
+              required
+              className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent"
+              placeholder="Contoh: Ayam Kampung"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">
+              Kategori
+            </label>
+            <select
+              value={kategori}
+              onChange={(e) => setKategori(e.target.value)}
+              className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent"
+            >
+              {KATEGORI_BAHAN.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">
+                Satuan Beli
+              </label>
+              {renderSatuanSelect(satBeli, setSatBeli, true, "Pilih...")}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">
+                Isi per Pak
+              </label>
+              <input
+                type="number"
+                value={isiPerPak}
+                onChange={(e) => setIsiPerPak(e.target.value)}
+                required
+                min="0.01"
+                step="any"
+                className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent"
+                placeholder="9"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">
+                Satuan Dasar
+              </label>
+              {renderSatuanSelect(satDasar, setSatDasar, true, "Pilih...")}
+            </div>
+          </div>
+
+          {isiPerPak && satBeli && satDasar && (
+            <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-xs th-text-secondary">
+              Konversi: 1 {satBeli} = {parseFloat(isiPerPak).toLocaleString("id-ID")} {satDasar}
+            </div>
+          )}
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">
+                Stok Awal ({satBeli || "sat beli"})
+              </label>
+              <input
+                type="number"
+                value={stokAwalBeli}
+                onChange={(e) => setStokAwalBeli(e.target.value)}
+                min="0"
+                step="any"
+                className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">
+                Reorder Pt ({satDasar || "sat dasar"})
+              </label>
+              <input
+                type="number"
+                value={reorderPoint}
+                onChange={(e) => setReorderPoint(e.target.value)}
+                required
+                min="0"
+                step="any"
+                className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">
+                Harga Beli (Rp)
+              </label>
+              <input
+                type="number"
+                value={hargaBeli}
+                onChange={(e) => setHargaBeli(e.target.value)}
+                min="0"
+                className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent"
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          {parseFloat(stokAwalBeli) > 0 && parseFloat(isiPerPak) > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs">
+              <span className="th-text-secondary">Konversi stok:</span>
+              <span className="font-semibold th-text">
+                {parseFloat(stokAwalBeli)} {satBeli || "?"}
+              </span>
+              <ArrowRight size={12} className="th-muted" />
+              <span className="font-bold text-success">
+                {stokDasar.toLocaleString("id-ID")} {satDasar || "?"}
+              </span>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 text-sm font-medium th-muted hover:th-text transition-colors touch-target"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:bg-red-700 transition-colors disabled:opacity-50 touch-target"
+            >
+              {saving ? "Menyimpan..." : initial ? "Simpan Perubahan" : "Tambah Bahan"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
