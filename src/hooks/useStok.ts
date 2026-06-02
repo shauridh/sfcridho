@@ -67,6 +67,30 @@ export function useStok() {
     return { error: null };
   };
 
+  const opname = async (id: string, jumlahAktual: number) => {
+    const bahan = bahanBaku.find((b) => b.id === id);
+    if (!bahan) return { error: new Error("Bahan tidak ditemukan") };
+
+    const selisih = jumlahAktual - bahan.stok;
+
+    const { error: updateError } = await supabase
+      .from("bahan_baku")
+      .update({ stok: jumlahAktual })
+      .eq("id", id);
+
+    if (updateError) return { error: updateError };
+
+    await supabase.from("stok_log").insert({
+      bahan_id: id,
+      tipe: "adjust",
+      qty: selisih,
+      referensi: `Opname: ${bahan.stok} → ${jumlahAktual} ${bahan.sat_dasar}`,
+    });
+
+    await fetchBahanBaku();
+    return { error: null };
+  };
+
   const alertCount = bahanBaku.filter(
     (b) => b.stok <= b.reorder_point
   ).length;
@@ -79,6 +103,7 @@ export function useStok() {
     editBahan,
     hapusBahan,
     restock,
+    opname,
     refresh: fetchBahanBaku,
   };
 }

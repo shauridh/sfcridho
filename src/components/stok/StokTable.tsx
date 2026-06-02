@@ -2,17 +2,18 @@
 
 import { BahanBaku, getStokStatus, getStokColor, getStokBgColor } from "@/lib/types";
 import { tampilanStok, formatRupiah } from "@/lib/utils";
-import { Edit3, PlusCircle, Trash2 } from "lucide-react";
+import { Edit3, PlusCircle, Trash2, ClipboardCheck } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
   bahanBaku: BahanBaku[];
   onEdit: (b: BahanBaku) => void;
   onRestock: (b: BahanBaku) => void;
+  onOpname: (b: BahanBaku) => void;
   onDelete: (id: string) => void;
 }
 
-export default function StokTable({ bahanBaku, onEdit, onRestock, onDelete }: Props) {
+export default function StokTable({ bahanBaku, onEdit, onRestock, onOpname, onDelete }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const sorted = [...bahanBaku].sort((a, b) => {
@@ -54,6 +55,9 @@ export default function StokTable({ bahanBaku, onEdit, onRestock, onDelete }: Pr
                     <div className="flex items-center justify-end gap-1">
                       <button onClick={() => onRestock(b)} className="flex items-center gap-1 px-2.5 py-1.5 bg-green-50 dark:bg-green-950/30 text-success rounded-lg text-xs font-medium hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors touch-target border border-green-200 dark:border-green-800">
                         <PlusCircle size={14} /> Stok
+                      </button>
+                      <button onClick={() => onOpname(b)} className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors touch-target border border-blue-200 dark:border-blue-800">
+                        <ClipboardCheck size={14} /> Opname
                       </button>
                       <button onClick={() => onEdit(b)} className="p-2 th-muted hover:th-accent rounded-lg hover:th-surface transition-colors touch-target"><Edit3 size={16} /></button>
                       {confirmDelete === b.id ? (

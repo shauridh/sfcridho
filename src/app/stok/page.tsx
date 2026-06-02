@@ -5,14 +5,16 @@ import { useStok } from "@/hooks/useStok";
 import StokTable from "@/components/stok/StokTable";
 import StokForm from "@/components/stok/StokForm";
 import RestockModal from "@/components/stok/RestockModal";
+import OpnameModal from "@/components/stok/OpnameModal";
 import { BahanBaku } from "@/lib/types";
 import { Plus } from "lucide-react";
 
 export default function StokPage() {
-  const { bahanBaku, loading, tambahBahan, editBahan, hapusBahan, restock } = useStok();
+  const { bahanBaku, loading, tambahBahan, editBahan, hapusBahan, restock, opname } = useStok();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<BahanBaku | null>(null);
   const [restocking, setRestocking] = useState<BahanBaku | null>(null);
+  const [opnaming, setOpnaming] = useState<BahanBaku | null>(null);
 
   if (loading) {
     return (
@@ -50,6 +52,7 @@ export default function StokPage() {
           setShowForm(true);
         }}
         onRestock={(b) => setRestocking(b)}
+        onOpname={(b) => setOpnaming(b)}
         onDelete={hapusBahan}
       />
 
@@ -79,6 +82,17 @@ export default function StokPage() {
           onRestock={async (jumlah) => {
             await restock(restocking.id, jumlah);
             setRestocking(null);
+          }}
+        />
+      )}
+
+      {opnaming && (
+        <OpnameModal
+          bahan={opnaming}
+          onClose={() => setOpnaming(null)}
+          onOpname={async (jumlahAktual) => {
+            await opname(opnaming.id, jumlahAktual);
+            setOpnaming(null);
           }}
         />
       )}
