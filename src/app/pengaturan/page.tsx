@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSettings, updateSetting, sendWhatsApp } from "@/lib/whatsapp";
+import jsQR from "jsQR";
 import { supabase } from "@/lib/supabase";
 import { AppUser, Akun, TIPE_AKUN_OPTIONS } from "@/lib/types";
 import { Store, Users, MessageCircle, Target, Save, Plus, Trash2, Edit3, Wallet, QrCode } from "lucide-react";
@@ -19,6 +20,9 @@ export default function PengaturanPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [waTestStatus, setWaTestStatus] = useState<string | null>(null);
+  const [qrisUploading, setQrisUploading] = useState(false);
+  const [qrisUploadStatus, setQrisUploadStatus] = useState<string | null>(null);
+  const qrisFileRef = useRef<HTMLInputElement>(null);
   const [showUserForm, setShowUserForm] = useState(false);
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   const [userForm, setUserForm] = useState({ username: "", pin: "", nama: "", role: "kasir" });
@@ -94,6 +98,49 @@ export default function PengaturanPage() {
   const hapusAkun = async (id: string) => {
     await supabase.from("akun").delete().eq("id", id);
     await fetchData();
+  };
+
+  const handleQrisUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setQrisUploading(true);
+    setQrisUploadStatus(null);
+    try {
+      const img = new Image();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      img.src = dataUrl;
+      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const qr = jsQR(imageData.data, imageData.width, imageData.height);
+      if (!qr?.data) {
+        setQrisUploadStatus("QR code tidak terdeteksi dalam gambar");
+        setQrisUploading(false);
+        return;
+      }
+      if (!qr.data.startsWith("000201")) {
+        setQrisUploadStatus("Gambar bukan QRIS yang valid");
+        setQrisUploading(false);
+        return;
+      }
+      setSettings({ ...settings, qris_string: qr.data });
+      await updateSetting("qris_string", qr.data);
+      setQrisUploadStatus("QRIS berhasil diupload & disimpan!");
+    } catch (err: any) {
+      setQrisUploadStatus("Gagal memproses gambar: " + (err.message || "Unknown error"));
+    } finally {
+      setQrisUploading(false);
+      if (qrisFileRef.current) qrisFileRef.current.value = "";
+    }
   };
 
   if (!isOwner) {
@@ -278,11 +325,44 @@ export default function PengaturanPage() {
       {tab === "qris" && (
         <div className="th-card border th-border rounded-2xl p-5 shadow-sm max-w-lg space-y-4">
           <h3 className="font-bold th-text">Pengaturan QRIS</h3>
-          <p className="text-xs th-text-secondary">Masukkan string QRIS statis dari merchant. Saat kasir pilih QRIS, sistem akan otomatis generate QR dinamis sesuai nominal transaksi.</p>
+          <p className="text-xs th-text-secondary">Upload gambar QR code QRIS statis dari merchant. Sistem akan otomatis decode dan generate QR dinamis sesuai nominal transaksi di kasir.</p>
+
           <div>
-            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">QRIS Static String</label>
-            <textarea value={settings.qris_string || ""} onChange={(e) => setSettings({ ...settings, qris_string: e.target.value })} rows={4} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-xs font-mono th-text focus:outline-none focus:border-accent resize-none" placeholder="00020101021126570011ID.DANA.WWW..." />
-            <p className="text-[10px] th-muted mt-1">String QRIS statis dari DANA, GoPay, OVO, dll. Bisa didapat dari dashboard merchant.</p>
+            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Upload Gambar QRIS</label>
+            <div
+              onClick={() => qrisFileRef.current?.click()}
+              className="border-2 border-dashed th-border rounded-xl p-6 text-center cursor-pointer hover:border-accent/50 transition-colors"
+            >
+              {qrisUploading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm th-muted">Membaca QR code...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <QrCode size={32} className="th-muted" />
+                  <p className="text-sm th-text-secondary">Klik untuk upload gambar QRIS</p>
+                  <p className="text-[10px] th-muted">PNG, JPG, atau screenshot QR code</p>
+                </div>
+              )}
+            </div>
+            <input ref={qrisFileRef} type="file" accept="image/*" onChange={handleQrisUpload} className="hidden" />
+          </div>
+
+          {qrisUploadStatus && (
+            <p className={`text-sm font-medium ${qrisUploadStatus.includes("berhasil") ? "text-success" : "text-danger"}`}>{qrisUploadStatus}</p>
+          )}
+
+          {settings.qris_string && (
+            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-xl p-3">
+              <p className="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">QRIS Terdeteksi</p>
+              <p className="text-[10px] font-mono text-green-700 dark:text-green-300 break-all">{settings.qris_string.slice(0, 60)}...</p>
+            </div>
+          )}
+
+          <div className="border-t th-border pt-4">
+            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Atau input manual string QRIS</label>
+            <textarea value={settings.qris_string || ""} onChange={(e) => setSettings({ ...settings, qris_string: e.target.value })} rows={3} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-xs font-mono th-text focus:outline-none focus:border-accent resize-none" placeholder="00020101021126570011ID.DANA.WWW..." />
           </div>
           <button onClick={() => handleSaveSettings({ qris_string: settings.qris_string })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
             {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan"}
@@ -360,6 +440,10 @@ export default function PengaturanPage() {
     </div>
   );
 }
+
+
+
+
 
 
 
