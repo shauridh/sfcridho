@@ -119,6 +119,7 @@ export const KATEGORI_PRODUK = [
   "Paket",
   "Minuman",
   "Tambahan",
+  "Lainnya",
 ] as const;
 
 export const SATUAN_OPTIONS = {

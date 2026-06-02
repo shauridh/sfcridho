@@ -62,39 +62,39 @@ export function formatLaporanWA(data: {
   shiftInfo?: { uangBuka: number; uangAmbil: number; uangDrawer: number };
   stokOpname?: { nama: string; stok: number; sat: string; status: string }[];
 }): string {
-  const lines = [
-    `*${data.storeName}*`,
-    `Laporan Harian â€” ${data.date}`,
-    ``,
-    `ðŸ“Š *Ringkasan Penjualan*`,
-    `Omzet: Rp ${data.totalOmzet.toLocaleString("id-ID")}`,
-    `Transaksi: ${data.jumlahTransaksi}`,
-    `Rata-rata: Rp ${data.rataRata.toLocaleString("id-ID")}`,
-    ``,
-  ];
+  const lines: string[] = [];
+
+  lines.push(`*${data.storeName}*`);
+  lines.push(`Laporan Harian - ${data.date}`);
+  lines.push(``);
+  lines.push(`[Ringkasan Penjualan]`);
+  lines.push(`Omzet: Rp ${data.totalOmzet.toLocaleString("id-ID")}`);
+  lines.push(`Transaksi: ${data.jumlahTransaksi}`);
+  lines.push(`Rata-rata: Rp ${data.rataRata.toLocaleString("id-ID")}`);
+  lines.push(``);
 
   if (data.metodeBayar) {
-    lines.push(`ðŸ’³ *Metode Pembayaran*`);
+    lines.push(`[Metode Pembayaran]`);
     lines.push(`Tunai: Rp ${data.metodeBayar.tunai.total.toLocaleString("id-ID")} (${data.metodeBayar.tunai.count} trx)`);
     lines.push(`QRIS: Rp ${data.metodeBayar.qris.total.toLocaleString("id-ID")} (${data.metodeBayar.qris.count} trx)`);
     lines.push(``);
   }
 
   if (data.bestSellers.length > 0) {
-    lines.push(`ðŸ† *Menu Terlaris*`);
+    lines.push(`[Menu Terlaris]`);
     data.bestSellers.forEach((b, i) => {
       lines.push(`${i + 1}. ${b.nama} (${b.qty} porsi)`);
     });
     lines.push(``);
   }
 
-  lines.push(`ðŸ’° *Kas*`);
+  lines.push(`[Kas]`);
   lines.push(`Masuk: Rp ${data.kasMasuk.toLocaleString("id-ID")}`);
   lines.push(`Keluar: Rp ${data.kasKeluar.toLocaleString("id-ID")}`);
 
   if (data.shiftInfo) {
     lines.push(``);
-    lines.push(`ðŸª *Kasir*`);
+    lines.push(`[Kasir]`);
     lines.push(`Uang Buka: Rp ${data.shiftInfo.uangBuka.toLocaleString("id-ID")}`);
     lines.push(`Diambil: Rp ${data.shiftInfo.uangAmbil.toLocaleString("id-ID")}`);
     lines.push(`Sisa Drawer: Rp ${data.shiftInfo.uangDrawer.toLocaleString("id-ID")}`);
@@ -104,20 +104,19 @@ export function formatLaporanWA(data: {
     const stokWarning = data.stokOpname.filter((s) => s.status !== "aman");
     if (stokWarning.length > 0) {
       lines.push(``);
-      lines.push(`ðŸ“¦ *Stok Opname â€” Perlu Perhatian*`);
+      lines.push(`[Stok Perlu Perhatian]`);
       stokWarning.forEach((s) => {
-        const icon = s.status === "habis" ? "ðŸ”´" : s.status === "kritis" ? "ðŸŸ " : "ðŸŸ¡";
+        const icon = s.status === "habis" ? "!!" : s.status === "kritis" ? "!" : "~";
         lines.push(`${icon} ${s.nama}: ${s.stok} ${s.sat} (${s.status})`);
       });
     }
 
     lines.push(``);
-    lines.push(`ðŸ“‹ *Stok Lengkap*`);
+    lines.push(`[Stok Lengkap]`);
     data.stokOpname.forEach((s) => {
-      lines.push(`â€¢ ${s.nama}: ${s.stok} ${s.sat}`);
+      lines.push(`- ${s.nama}: ${s.stok} ${s.sat}`);
     });
   }
 
   return lines.join("\n");
 }
-

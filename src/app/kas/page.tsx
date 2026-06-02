@@ -5,7 +5,7 @@ import { useKas } from "@/hooks/useKas";
 import { formatRupiah, formatWaktu } from "@/lib/utils";
 import { KATEGORI_KAS, Opex, Piutang, Akun } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
-import { Plus, ArrowUpCircle, ArrowDownCircle, Trash2, ChevronLeft, ChevronRight, Calendar, Receipt, Repeat, CreditCard, TrendingDown, Wallet } from "lucide-react";
+import { Plus, ArrowUpCircle, ArrowDownCircle, Trash2, ChevronLeft, ChevronRight, Calendar, Receipt, Repeat, CreditCard, TrendingDown, Wallet, CheckCircle2, Edit3 } from "lucide-react";
 
 type Tab = "overview" | "kas" | "opex" | "piutang";
 
@@ -379,7 +379,12 @@ export default function KasPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => { setEditingPiutang(p); setPiutangForm({ pihak: p.pihak, nominal: p.nominal.toString(), tipe: p.tipe, keterangan: p.keterangan || "", jatuh_tempo: p.jatuh_tempo || "", tenor: p.tenor?.toString() || "", bunga: p.bunga?.toString() || "", cicilan: p.cicilan?.toString() || "" }); setShowPiutangForm(true); }} className="p-1.5 th-muted hover:th-accent text-xs">Edit</button>
+                        {p.status === "belum" && (
+                          <button onClick={() => togglePiutangStatus(p.id, p.status)} className="flex items-center gap-1 px-2 py-1.5 bg-green-50 dark:bg-green-950/30 text-success rounded-lg text-xs font-medium hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors border border-green-200 dark:border-green-800">
+                            <CheckCircle2 size={12} /> Lunas
+                          </button>
+                        )}
+                        <button onClick={() => { setEditingPiutang(p); setPiutangForm({ pihak: p.pihak, nominal: p.nominal.toString(), tipe: p.tipe, keterangan: p.keterangan || "", jatuh_tempo: p.jatuh_tempo || "", tenor: p.tenor?.toString() || "", bunga: p.bunga?.toString() || "", cicilan: p.cicilan?.toString() || "" }); setShowPiutangForm(true); }} className="p-1.5 th-muted hover:th-accent text-xs"><Edit3 size={14} /></button>
                         <button onClick={() => hapusPiutang(p.id)} className="p-1.5 th-muted hover:text-danger"><Trash2 size={14} /></button>
                       </div>
                     </td>
