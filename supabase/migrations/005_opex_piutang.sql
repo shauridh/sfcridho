@@ -1,4 +1,4 @@
--- ============================================
+﻿-- ============================================
 -- Migration 005: Opex, Hutang/Piutang, wa_sender
 -- ============================================
 
@@ -39,10 +39,4 @@ CREATE POLICY "allow_all_piutang" ON piutang FOR ALL USING (true) WITH CHECK (tr
 INSERT INTO settings (key, value) VALUES ('wa_sender', '')
 ON CONFLICT (key) DO NOTHING;
 
--- 4. Seed opex contoh
-INSERT INTO opex (nama, nominal, frekuensi, jatuh_tempo) VALUES
-  ('Sewa Tempat', 3000000, 'bulanan', 1),
-  ('Listrik', 500000, 'bulanan', 5),
-  ('Air', 150000, 'bulanan', 5),
-  ('Internet', 300000, 'bulanan', 10)
-ON CONFLICT DO NOTHING;
+

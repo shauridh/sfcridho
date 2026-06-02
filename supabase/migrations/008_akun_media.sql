@@ -1,4 +1,4 @@
--- Migration 008: Media Penyimpanan (Akun) + Kas sumber/tujuan
+﻿-- Migration 008: Media Penyimpanan (Akun) + Kas sumber/tujuan
 
 -- 1. Tabel Akun (media penyimpanan uang)
 CREATE TABLE IF NOT EXISTS akun (
@@ -17,13 +17,8 @@ CREATE POLICY "allow_all_akun" ON akun FOR ALL USING (true) WITH CHECK (true);
 
 CREATE INDEX IF NOT EXISTS idx_akun_aktif ON akun(aktif);
 
--- 2. Seed akun contoh
-INSERT INTO akun (nama, tipe, warna) VALUES
-  ('Kas Fisik', 'kas_fisik', '#DC2626'),
-  ('BCA', 'bank', '#0066FF'),
-  ('Dana', 'ewallet', '#00BFFF')
-ON CONFLICT DO NOTHING;
 
 -- 3. Tambah kolom sumber & tujuan di kas
 ALTER TABLE kas ADD COLUMN IF NOT EXISTS sumber_akun_id UUID REFERENCES akun(id);
 ALTER TABLE kas ADD COLUMN IF NOT EXISTS tujuan_akun_id UUID REFERENCES akun(id);
+
