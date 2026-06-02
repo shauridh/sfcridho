@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { supabase } from "@/lib/supabase";
 
@@ -26,7 +26,7 @@ export async function sendWhatsApp(message: string): Promise<{ success: boolean;
       return { success: false, error: "WhatsApp belum dikonfigurasi" };
     }
 
-    const resp = await fetch("https://seen.getsender.id/send-message", {
+    const resp = await fetch("/api/whatsapp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -64,9 +64,9 @@ export function formatLaporanWA(data: {
 }): string {
   const lines = [
     `*${data.storeName}*`,
-    `Laporan Harian — ${data.date}`,
+    `Laporan Harian â€” ${data.date}`,
     ``,
-    `📊 *Ringkasan Penjualan*`,
+    `ðŸ“Š *Ringkasan Penjualan*`,
     `Omzet: Rp ${data.totalOmzet.toLocaleString("id-ID")}`,
     `Transaksi: ${data.jumlahTransaksi}`,
     `Rata-rata: Rp ${data.rataRata.toLocaleString("id-ID")}`,
@@ -74,27 +74,27 @@ export function formatLaporanWA(data: {
   ];
 
   if (data.metodeBayar) {
-    lines.push(`💳 *Metode Pembayaran*`);
+    lines.push(`ðŸ’³ *Metode Pembayaran*`);
     lines.push(`Tunai: Rp ${data.metodeBayar.tunai.total.toLocaleString("id-ID")} (${data.metodeBayar.tunai.count} trx)`);
     lines.push(`QRIS: Rp ${data.metodeBayar.qris.total.toLocaleString("id-ID")} (${data.metodeBayar.qris.count} trx)`);
     lines.push(``);
   }
 
   if (data.bestSellers.length > 0) {
-    lines.push(`🏆 *Menu Terlaris*`);
+    lines.push(`ðŸ† *Menu Terlaris*`);
     data.bestSellers.forEach((b, i) => {
       lines.push(`${i + 1}. ${b.nama} (${b.qty} porsi)`);
     });
     lines.push(``);
   }
 
-  lines.push(`💰 *Kas*`);
+  lines.push(`ðŸ’° *Kas*`);
   lines.push(`Masuk: Rp ${data.kasMasuk.toLocaleString("id-ID")}`);
   lines.push(`Keluar: Rp ${data.kasKeluar.toLocaleString("id-ID")}`);
 
   if (data.shiftInfo) {
     lines.push(``);
-    lines.push(`🏪 *Kasir*`);
+    lines.push(`ðŸª *Kasir*`);
     lines.push(`Uang Buka: Rp ${data.shiftInfo.uangBuka.toLocaleString("id-ID")}`);
     lines.push(`Diambil: Rp ${data.shiftInfo.uangAmbil.toLocaleString("id-ID")}`);
     lines.push(`Sisa Drawer: Rp ${data.shiftInfo.uangDrawer.toLocaleString("id-ID")}`);
@@ -104,19 +104,20 @@ export function formatLaporanWA(data: {
     const stokWarning = data.stokOpname.filter((s) => s.status !== "aman");
     if (stokWarning.length > 0) {
       lines.push(``);
-      lines.push(`📦 *Stok Opname — Perlu Perhatian*`);
+      lines.push(`ðŸ“¦ *Stok Opname â€” Perlu Perhatian*`);
       stokWarning.forEach((s) => {
-        const icon = s.status === "habis" ? "🔴" : s.status === "kritis" ? "🟠" : "🟡";
+        const icon = s.status === "habis" ? "ðŸ”´" : s.status === "kritis" ? "ðŸŸ " : "ðŸŸ¡";
         lines.push(`${icon} ${s.nama}: ${s.stok} ${s.sat} (${s.status})`);
       });
     }
 
     lines.push(``);
-    lines.push(`📋 *Stok Lengkap*`);
+    lines.push(`ðŸ“‹ *Stok Lengkap*`);
     data.stokOpname.forEach((s) => {
-      lines.push(`• ${s.nama}: ${s.stok} ${s.sat}`);
+      lines.push(`â€¢ ${s.nama}: ${s.stok} ${s.sat}`);
     });
   }
 
   return lines.join("\n");
 }
+
