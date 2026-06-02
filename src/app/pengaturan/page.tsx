@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSettings, updateSetting, sendWhatsApp } from "@/lib/whatsapp";
-import jsQR from "jsQR";
+
 import { supabase } from "@/lib/supabase";
 import { AppUser, Akun, TIPE_AKUN_OPTIONS } from "@/lib/types";
 import { Store, Users, MessageCircle, Target, Save, Plus, Trash2, Edit3, Wallet, QrCode } from "lucide-react";
@@ -121,7 +121,8 @@ export default function PengaturanPage() {
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const qr = jsQR(imageData.data, imageData.width, imageData.height);
+      const jsQRModule = await import("jsQR");
+      const qr = jsQRModule.default(imageData.data, imageData.width, imageData.height);
       if (!qr?.data) {
         setQrisUploadStatus("QR code tidak terdeteksi dalam gambar");
         setQrisUploading(false);
@@ -440,6 +441,8 @@ export default function PengaturanPage() {
     </div>
   );
 }
+
+
 
 
 

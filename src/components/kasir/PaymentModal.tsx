@@ -5,7 +5,7 @@ import { formatRupiah } from "@/lib/utils";
 import { getSettings } from "@/lib/whatsapp";
 import { convertQRIS } from "@/lib/qris";
 import { X, Banknote, QrCode, Loader2 } from "lucide-react";
-import QRCode from "qrcode";
+
 
 interface Props {
   total: number;
@@ -47,7 +47,8 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
           return;
         }
         const dynamicQris = convertQRIS(staticQris, { amount: total });
-        const dataUrl = await QRCode.toDataURL(dynamicQris, {
+        const QRCodeLib = await import("qrcode");
+        const dataUrl = await QRCodeLib.default.toDataURL(dynamicQris, {
           width: 256,
           margin: 2,
           color: { dark: "#000000", light: "#FFFFFF" },
@@ -151,3 +152,5 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
     </div>
   );
 }
+
+
