@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { getSettings, updateSetting } from "@/lib/whatsapp";
+import { getSettings, updateSetting, sendWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/lib/supabase";
 import { AppUser, Akun, TIPE_AKUN_OPTIONS } from "@/lib/types";
 import { Store, Users, MessageCircle, Target, Save, Plus, Trash2, Edit3, Wallet } from "lucide-react";
@@ -18,6 +18,7 @@ export default function PengaturanPage() {
   const [akunForm, setAkunForm] = useState({ nama: "", tipe: "kas_fisik", warna: "#6B7280" });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [waTestStatus, setWaTestStatus] = useState<string | null>(null);
   const [showUserForm, setShowUserForm] = useState(false);
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   const [userForm, setUserForm] = useState({ username: "", pin: "", nama: "", role: "kasir" });
@@ -240,9 +241,23 @@ export default function PengaturanPage() {
               <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${settings.wa_auto_send === "true" ? "translate-x-6" : "translate-x-0.5"}`} />
             </button>
           </div>
-          <button onClick={() => handleSaveSettings({ wa_api_key: settings.wa_api_key, wa_phone: settings.wa_phone, wa_sender: settings.wa_sender, wa_auto_send: settings.wa_auto_send })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
-            {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan"}
-          </button>
+          <div className="flex gap-3">
+            <button onClick={() => handleSaveSettings({ wa_api_key: settings.wa_api_key, wa_phone: settings.wa_phone, wa_sender: settings.wa_sender, wa_auto_send: settings.wa_auto_send })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
+              {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan"}
+            </button>
+            <button onClick={async () => {
+              setWaTestStatus(null);
+              await handleSaveSettings({ wa_api_key: settings.wa_api_key, wa_phone: settings.wa_phone, wa_sender: settings.wa_sender, wa_auto_send: settings.wa_auto_send });
+              const res = await sendWhatsApp(`*${settings.store_name || "Sabana FC"}*\nTest notifikasi WhatsApp.\nJika pesan ini masuk, konfigurasi sudah benar.`);
+              setWaTestStatus(res.success ? "Terkirim!" : `Gagal: ${res.error}`);
+              setTimeout(() => setWaTestStatus(null), 5000);
+            }} disabled={saving} className="px-6 py-2.5 border th-border rounded-xl font-semibold text-sm th-muted hover:th-text touch-target">
+              Test WA
+            </button>
+          </div>
+          {waTestStatus && (
+            <p className={`text-sm font-medium ${waTestStatus === "Terkirim!" ? "text-success" : "text-danger"}`}>{waTestStatus}</p>
+          )}
         </div>
       )}
 

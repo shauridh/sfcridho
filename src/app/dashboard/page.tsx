@@ -12,7 +12,7 @@ import BestSellers from "@/components/laporan/BestSellers";
 import WeeklyTrend from "@/components/laporan/WeeklyTrend";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
 import { getSettings } from "@/lib/whatsapp";
-import { ChevronLeft, ChevronRight, Calendar, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, ArrowUpCircle, ArrowDownCircle, Banknote, QrCode, Wallet } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -71,24 +71,50 @@ export default function DashboardPage() {
 
       <SummaryCards totalOmzet={data.totalOmzet} jumlahTransaksi={data.jumlahTransaksi} rataRata={data.rataRata} totalItem={data.totalItem} />
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="th-card border th-border rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/30"><ArrowUpCircle size={16} className="text-success" /></div>
-            <span className="text-xs font-semibold th-muted uppercase">Kas Masuk</span>
-          </div>
-          <p className="text-xl font-bold text-success">{formatRupiah(totalMasuk)}</p>
+      <div className="th-card border th-border rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Wallet size={16} className="th-accent" />
+          <h3 className="text-sm font-bold th-text">Ringkasan Keuangan</h3>
         </div>
-        <div className="th-card border th-border rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/30"><ArrowDownCircle size={16} className="text-danger" /></div>
-            <span className="text-xs font-semibold th-muted uppercase">Kas Keluar</span>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-3 border border-green-200 dark:border-green-800">
+            <div className="flex items-center gap-1.5 mb-1">
+              <ArrowUpCircle size={14} className="text-green-600" />
+              <span className="text-[10px] font-semibold text-green-600 dark:text-green-400 uppercase">Kas Masuk</span>
+            </div>
+            <p className="text-lg font-bold text-green-700 dark:text-green-300">{formatRupiah(totalMasuk)}</p>
           </div>
-          <p className="text-xl font-bold text-danger">{formatRupiah(totalKeluar)}</p>
-        </div>
-        <div className="th-card border th-border rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2"><span className="text-xs font-semibold th-muted uppercase">Bersih</span></div>
-          <p className={`text-xl font-bold ${selisih >= 0 ? "text-success" : "text-danger"}`}>{formatRupiah(selisih)}</p>
+          <div className="bg-red-50 dark:bg-red-950/20 rounded-xl p-3 border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-1.5 mb-1">
+              <ArrowDownCircle size={14} className="text-red-600" />
+              <span className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase">Kas Keluar</span>
+            </div>
+            <p className="text-lg font-bold text-red-700 dark:text-red-300">{formatRupiah(totalKeluar)}</p>
+          </div>
+          <div className={`rounded-xl p-3 border ${selisih >= 0 ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"}`}>
+            <span className={`text-[10px] font-semibold uppercase ${selisih >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>Bersih</span>
+            <p className={`text-lg font-bold ${selisih >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>{formatRupiah(selisih)}</p>
+          </div>
+          {data.metodeBayar && (
+            <>
+              <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-3 border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Banknote size={14} className="text-green-600" />
+                  <span className="text-[10px] font-semibold text-green-600 dark:text-green-400 uppercase">Tunai</span>
+                </div>
+                <p className="text-lg font-bold text-green-700 dark:text-green-300">{formatRupiah(data.metodeBayar.tunai.total)}</p>
+                <p className="text-[10px] text-green-500">{data.metodeBayar.tunai.count} trx</p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-3 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <QrCode size={14} className="text-blue-600" />
+                  <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase">QRIS</span>
+                </div>
+                <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{formatRupiah(data.metodeBayar.qris.total)}</p>
+                <p className="text-[10px] text-blue-500">{data.metodeBayar.qris.count} trx</p>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

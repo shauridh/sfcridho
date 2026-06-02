@@ -128,6 +128,13 @@ export function useTransaksi() {
         .map(([jam, total]) => ({ jam: parseInt(jam), total, label: `${jam}:00` }))
         .sort((a, b) => b.total - a.total);
 
+      const tunaiList = transaksiList.filter((t) => (t as any).metode_bayar !== "qris");
+      const qrisList = transaksiList.filter((t) => (t as any).metode_bayar === "qris");
+      const metodeBayar = {
+        tunai: { count: tunaiList.length, total: tunaiList.reduce((s, t) => s + t.total, 0) },
+        qris: { count: qrisList.length, total: qrisList.reduce((s, t) => s + t.total, 0) },
+      };
+
       return {
         totalOmzet,
         jumlahTransaksi,
@@ -137,6 +144,7 @@ export function useTransaksi() {
         transaksiList,
         bestSellersList,
         peakHours,
+        metodeBayar,
       };
     },
     [getTransaksiHariIni]

@@ -35,6 +35,7 @@ export interface Transaksi {
   total: number;
   bayar: number;
   kembalian: number;
+  metode_bayar: "tunai" | "qris";
 }
 
 export interface TransaksiItem {

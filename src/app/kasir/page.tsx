@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useProduk } from "@/hooks/useProduk";
 import { useTransaksi } from "@/hooks/useTransaksi";
 import { useShift } from "@/hooks/useShift";
@@ -33,6 +34,7 @@ export default function KasirPage() {
   const { activeShift, isOpen, loading: loadingShift, lastUangDrawer, bukaShift, tutupShift } = useShift();
   const { user } = useAuth();
   const { registerCloseAction, unregisterCloseAction } = useShiftAction();
+  const router = useRouter();
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [filterKategori, setFilterKategori] = useState("Semua");
@@ -123,6 +125,7 @@ export default function KasirPage() {
 
   const handleCloseShift = async (uangAmbil: number) => {
     const shiftId = activeShift?.id;
+    const uangBuka = activeShift?.uang_buka || 0;
     const res = await tutupShift(uangAmbil);
     if (!res.error) {
       setShowCloseShift(false);
@@ -140,6 +143,15 @@ export default function KasirPage() {
       if (settings.wa_auto_send === "true" && settings.wa_api_key && settings.wa_phone) {
         const laporan = await getLaporanHariIni();
         const storeName = settings.store_name || "Sabana FC";
+
+        const { data: stokData } = await supabase.from("bahan_baku").select("nama, stok, sat_dasar, reorder_point").order("nama");
+        const stokOpname = (stokData || []).map((b: any) => ({
+          nama: b.nama,
+          stok: b.stok,
+          sat: b.sat_dasar,
+          status: b.stok <= 0 ? "habis" : b.stok <= b.reorder_point * 0.5 ? "kritis" : b.stok <= b.reorder_point ? "rendah" : "aman",
+        }));
+
         const msg = formatLaporanWA({
           storeName,
           date: new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
@@ -149,10 +161,14 @@ export default function KasirPage() {
           bestSellers: laporan.bestSellersList || [],
           kasMasuk: 0,
           kasKeluar: 0,
-          shiftInfo: activeShift ? { uangBuka: activeShift.uang_buka, uangAmbil, uangDrawer: activeShift.uang_buka + laporan.totalOmzet - uangAmbil } : undefined,
+          metodeBayar: (laporan as any).metodeBayar,
+          shiftInfo: shiftId ? { uangBuka, uangAmbil, uangDrawer: uangBuka + laporan.totalOmzet - uangAmbil } : undefined,
+          stokOpname,
         });
         await sendWhatsApp(msg);
       }
+
+      router.push("/dashboard");
     }
     return res;
   };
