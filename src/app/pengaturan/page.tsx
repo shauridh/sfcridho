@@ -121,7 +121,7 @@ export default function PengaturanPage() {
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const jsQRModule = await import("jsQR");
+      const jsQRModule = await import("jsqr");
       const qr = jsQRModule.default(imageData.data, imageData.width, imageData.height);
       if (!qr?.data) {
         setQrisUploadStatus("QR code tidak terdeteksi dalam gambar");
@@ -441,6 +441,7 @@ export default function PengaturanPage() {
     </div>
   );
 }
+
 
 
 
