@@ -11,6 +11,13 @@ export interface BahanBaku {
   created_at: string;
 }
 
+export interface ForecastItem extends BahanBaku {
+  avgDaily: number;
+  daysRemaining: number;
+  stockNeeded7d: number;
+  reorderQty: number;
+}
+
 export interface Produk {
   id: string;
   nama: string;

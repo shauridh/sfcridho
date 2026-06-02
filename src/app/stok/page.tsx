@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useStok } from "@/hooks/useStok";
@@ -6,11 +6,12 @@ import StokTable from "@/components/stok/StokTable";
 import StokForm from "@/components/stok/StokForm";
 import RestockModal from "@/components/stok/RestockModal";
 import OpnameModal from "@/components/stok/OpnameModal";
+import ForecastBanner from "@/components/stok/ForecastBanner";
 import { BahanBaku } from "@/lib/types";
 import { Plus } from "lucide-react";
 
 export default function StokPage() {
-  const { bahanBaku, loading, tambahBahan, editBahan, hapusBahan, restock, opname } = useStok();
+  const { bahanBaku, forecast, loading, tambahBahan, editBahan, hapusBahan, restock, opname } = useStok();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<BahanBaku | null>(null);
   const [restocking, setRestocking] = useState<BahanBaku | null>(null);
@@ -26,11 +27,13 @@ export default function StokPage() {
 
   return (
     <div className="p-6 space-y-6">
+      <ForecastBanner forecast={forecast} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold th-text">Bahan Baku</h1>
           <p className="text-sm th-text-secondary mt-1">
-            Pantau stok dan kelola bahan baku outlet
+            Pantau stok, forecast, dan kelola bahan baku outlet
           </p>
         </div>
         <button
@@ -47,6 +50,7 @@ export default function StokPage() {
 
       <StokTable
         bahanBaku={bahanBaku}
+        forecast={forecast}
         onEdit={(b) => {
           setEditing(b);
           setShowForm(true);
