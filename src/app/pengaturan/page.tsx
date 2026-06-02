@@ -1,15 +1,15 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSettings, updateSetting, sendWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/lib/supabase";
 import { AppUser, Akun, TIPE_AKUN_OPTIONS } from "@/lib/types";
-import { Store, Users, MessageCircle, Target, Save, Plus, Trash2, Edit3, Wallet } from "lucide-react";
+import { Store, Users, MessageCircle, Target, Save, Plus, Trash2, Edit3, Wallet, QrCode } from "lucide-react";
 
 export default function PengaturanPage() {
   const { isOwner } = useAuth();
-  const [tab, setTab] = useState<"store" | "users" | "wa" | "target" | "akun">("store");
+  const [tab, setTab] = useState<"store" | "users" | "wa" | "target" | "akun" | "qris">("store");
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<AppUser[]>([]);
   const [akunList, setAkunList] = useState<Akun[]>([]);
@@ -106,6 +106,7 @@ export default function PengaturanPage() {
     { key: "akun", label: "Akun", icon: Wallet },
     { key: "wa", label: "WhatsApp", icon: MessageCircle },
     { key: "target", label: "Target", icon: Target },
+    { key: "qris", label: "QRIS", icon: QrCode },
   ] as const;
 
   return (
@@ -274,6 +275,21 @@ export default function PengaturanPage() {
         </div>
       )}
 
+      {tab === "qris" && (
+        <div className="th-card border th-border rounded-2xl p-5 shadow-sm max-w-lg space-y-4">
+          <h3 className="font-bold th-text">Pengaturan QRIS</h3>
+          <p className="text-xs th-text-secondary">Masukkan string QRIS statis dari merchant. Saat kasir pilih QRIS, sistem akan otomatis generate QR dinamis sesuai nominal transaksi.</p>
+          <div>
+            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">QRIS Static String</label>
+            <textarea value={settings.qris_string || ""} onChange={(e) => setSettings({ ...settings, qris_string: e.target.value })} rows={4} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-xs font-mono th-text focus:outline-none focus:border-accent resize-none" placeholder="00020101021126570011ID.DANA.WWW..." />
+            <p className="text-[10px] th-muted mt-1">String QRIS statis dari DANA, GoPay, OVO, dll. Bisa didapat dari dashboard merchant.</p>
+          </div>
+          <button onClick={() => handleSaveSettings({ qris_string: settings.qris_string })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
+            {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan"}
+          </button>
+        </div>
+      )}
+
       {showUserForm && (
         <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={() => setShowUserForm(false)}>
           <div className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -344,3 +360,7 @@ export default function PengaturanPage() {
     </div>
   );
 }
+
+
+
+

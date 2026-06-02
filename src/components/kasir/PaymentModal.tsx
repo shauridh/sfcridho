@@ -1,8 +1,11 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatRupiah } from "@/lib/utils";
-import { X, Banknote, QrCode } from "lucide-react";
+import { getSettings } from "@/lib/whatsapp";
+import { convertQRIS } from "@/lib/qris";
+import { X, Banknote, QrCode, Loader2 } from "lucide-react";
+import QRCode from "qrcode";
 
 interface Props {
   total: number;
@@ -17,6 +20,9 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
   const [metode, setMetode] = useState<"tunai" | "qris" | null>(null);
   const [bayar, setBayar] = useState("");
   const [error, setError] = useState("");
+  const [qrImage, setQrImage] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState("");
 
   const nominal = parseInt(bayar.replace(/[^0-9]/g, ""), 10) || 0;
   const kembalian = nominal - total;
@@ -24,6 +30,38 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
 
   const handleNominalCepat = (nilai: number) => { setBayar(nilai.toString()); setError(""); };
   const handlePas = () => { setBayar(Math.ceil(total / 1000) * 1000 + ""); setError(""); };
+
+  useEffect(() => {
+    if (metode !== "qris") return;
+    let cancelled = false;
+    const generate = async () => {
+      setQrLoading(true);
+      setQrError("");
+      setQrImage(null);
+      try {
+        const settings = await getSettings();
+        const staticQris = settings.qris_string;
+        if (!staticQris) {
+          setQrError("QRIS belum dikonfigurasi di Pengaturan");
+          setQrLoading(false);
+          return;
+        }
+        const dynamicQris = convertQRIS(staticQris, { amount: total });
+        const dataUrl = await QRCode.toDataURL(dynamicQris, {
+          width: 256,
+          margin: 2,
+          color: { dark: "#000000", light: "#FFFFFF" },
+        });
+        if (!cancelled) setQrImage(dataUrl);
+      } catch (err: any) {
+        if (!cancelled) setQrError(err.message || "Gagal generate QRIS");
+      } finally {
+        if (!cancelled) setQrLoading(false);
+      }
+    };
+    generate();
+    return () => { cancelled = true; };
+  }, [metode, total]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,22 +92,31 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
             </button>
             <button onClick={() => setMetode("qris")} className="w-full flex items-center gap-3 p-4 th-card border th-border rounded-xl hover:border-accent transition-colors touch-target">
               <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950/30 rounded-lg flex items-center justify-center"><QrCode size={20} className="text-blue-600 dark:text-blue-400" /></div>
-              <div className="text-left"><p className="font-bold th-text">QRIS</p><p className="text-xs th-text-secondary">Bayar via QRIS, cek dari HP</p></div>
+              <div className="text-left"><p className="font-bold th-text">QRIS</p><p className="text-xs th-text-secondary">Scan QR code dari e-wallet / mBanking</p></div>
             </button>
           </div>
         ) : metode === "qris" ? (
           <form onSubmit={handleSubmit} className="p-5 space-y-4 text-center">
-            <div className="w-32 h-32 mx-auto th-surface rounded-xl flex items-center justify-center border th-border">
-              <QrCode size={64} className="th-muted" />
+            <div className="w-64 h-64 mx-auto rounded-xl flex items-center justify-center border th-border overflow-hidden bg-white">
+              {qrLoading ? (
+                <Loader2 size={32} className="animate-spin th-muted" />
+              ) : qrImage ? (
+                <img src={qrImage} alt="QRIS" className="w-full h-full object-contain p-2" />
+              ) : (
+                <div className="p-4 text-center">
+                  <QrCode size={48} className="th-muted mx-auto mb-2" />
+                  <p className="text-xs text-danger">{qrError || "Gagal generate QR"}</p>
+                </div>
+              )}
             </div>
             <p className="text-sm th-text-secondary">Total yang harus dibayar</p>
             <p className="text-3xl font-bold th-accent">{formatRupiah(total)}</p>
-            <p className="text-xs th-muted">Cek pembayaran dari HP, lalu klik tombol di bawah</p>
+            <p className="text-xs th-muted">Scan QR di atas dari aplikasi e-wallet / mBanking</p>
             {error && <p className="text-sm text-danger">{error}</p>}
             <button type="submit" disabled={loading} className="w-full py-3.5 bg-success text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">
               {loading ? "Memproses..." : "Sudah Dibayar"}
             </button>
-            <button type="button" onClick={() => setMetode(null)} className="text-xs th-muted hover:th-text">← Ganti metode</button>
+            <button type="button" onClick={() => { setMetode(null); setQrImage(null); setQrError(""); }} className="text-xs th-muted hover:th-text">← Ganti metode</button>
           </form>
         ) : (
           <form onSubmit={handleSubmit} className="p-5 space-y-4">
