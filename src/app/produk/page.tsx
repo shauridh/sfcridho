@@ -151,6 +151,7 @@ export default function ProdukPage() {
         <BulkInputModal
           title="Bulk Input Produk"
           columns={PRODUK_COLUMNS}
+          templateFile="/templates/template-produk.csv"
           onClose={() => setShowBulk(false)}
           onSave={handleBulkProduk}
         />

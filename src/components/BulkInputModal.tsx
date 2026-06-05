@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useRef } from "react";
-import { X, Plus, Trash2, ClipboardPaste, Upload } from "lucide-react";
+import { X, Plus, Trash2, ClipboardPaste, Upload, Download } from "lucide-react";
 
 export interface Column {
   key: string;
@@ -16,11 +16,12 @@ export interface Column {
 interface Props {
   title: string;
   columns: Column[];
+  templateFile?: string;
   onClose: () => void;
   onSave: (rows: Record<string, string>[]) => Promise<{ saved: number; errors: number }>;
 }
 
-export default function BulkInputModal({ title, columns, onClose, onSave }: Props) {
+export default function BulkInputModal({ title, columns, templateFile, onClose, onSave }: Props) {
   const [rows, setRows] = useState<Record<string, string>[]>([emptyRow()]);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ saved: number; errors: number } | null>(null);
@@ -72,9 +73,16 @@ export default function BulkInputModal({ title, columns, onClose, onSave }: Prop
 
         <div className="flex-1 overflow-auto p-4 space-y-4">
           <div className="th-surface rounded-xl p-3 space-y-2">
-            <div className="flex items-center gap-2 mb-1">
-              <ClipboardPaste size={14} className="th-muted" />
-              <span className="text-xs font-semibold th-muted uppercase">Paste dari Excel / Google Sheets</span>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <ClipboardPaste size={14} className="th-muted" />
+                <span className="text-xs font-semibold th-muted uppercase">Paste dari Excel / Google Sheets</span>
+              </div>
+              {templateFile && (
+                <a href={templateFile} download className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 rounded-lg text-[10px] font-medium border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-950/50">
+                  <Download size={10} /> Template Excel
+                </a>
+              )}
             </div>
             <textarea
               ref={textareaRef}
@@ -82,9 +90,12 @@ export default function BulkInputModal({ title, columns, onClose, onSave }: Prop
               className="w-full px-3 py-2 th-card border th-border rounded-lg text-xs font-mono th-text focus:outline-none focus:border-accent resize-none"
               placeholder={`Paste data tab-separated, contoh:\nGeprek Dada\tGeprek\t17000\nEs Teh\tMinuman\t5000`}
             />
-            <button onClick={handlePaste} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-950/50">
-              <Upload size={12} className="inline mr-1" /> Parse Paste
-            </button>
+            <div className="flex gap-2">
+              <button onClick={handlePaste} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-950/50">
+                <Upload size={12} className="inline mr-1" /> Parse Paste
+              </button>
+              <span className="text-[10px] th-muted self-center">Copy dari Excel → paste di atas → Parse</span>
+            </div>
           </div>
 
           <div className="space-y-2">

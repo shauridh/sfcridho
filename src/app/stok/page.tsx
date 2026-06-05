@@ -156,6 +156,7 @@ export default function StokPage() {
         <BulkInputModal
           title="Bulk Input Bahan Baku"
           columns={STOK_COLUMNS}
+          templateFile="/templates/template-stok.csv"
           onClose={() => setShowBulk(false)}
           onSave={handleBulkStok}
         />
