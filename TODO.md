@@ -1,62 +1,62 @@
 # Sabana FC POS — TODO & Known Issues
-## Session 7 Juni 2025
+## Session 7 Juni 2025 (Updated)
 
-### 🔴 Build Error (WAJIB FIX DULU)
+### ~~🔴 Build Error~~ ✅ FIXED
 
-| Issue | File | Detail |
+| Issue | File | Status |
 |-------|------|--------|
-| `onClose` not defined | `src/app/kas/page.tsx:435` | Batal button di form Opex pakai `onClick={onClose}` tapi tidak ada variable `onClose`. Harus ganti dengan `onClick={() => setShowOpexForm(false)}` |
-| Sama untuk Piutang form | `src/app/kas/page.tsx:475` | Sama — `onClick={onClose}` harus jadi `onClick={() => setShowPiutangForm(false)}` |
-| Sama untuk Pengaturan | `src/app/pengaturan/page.tsx:408,441` | User form & Akun form Batal button — `onClick={onClose}` harus jadi `onClick={() => setShowUserForm(false)}` / `onClick={() => setShowAkunForm(false)}` |
-
-**Root cause:** Batch regex fix yang menghapus `onClick={onClose}` dari overlay juga menghapus `onClick` dari button Batal. Kemudian restore salah — kas/piutang/opex/pengaturan forms tidak punya `onClose` function, hanya punya `setShowXxxForm(false)`.
+| `onClose` not defined — Opex form | `src/app/kas/page.tsx` | ✅ Fixed: `onClick={() => setShowOpexForm(false)}` |
+| `onClose` not defined — Piutang form | `src/app/kas/page.tsx` | ✅ Fixed: `onClick={() => setShowPiutangForm(false)}` |
+| `onClose` not defined — User form | `src/app/pengaturan/page.tsx` | ✅ Fixed: `onClick={() => setShowUserForm(false)}` |
+| `onClose` not defined — Akun form | `src/app/pengaturan/page.tsx` | ✅ Fixed: `onClick={() => setShowAkunForm(false)}` |
+| Batal button no onClick — Kas form | `src/app/kas/page.tsx` | ✅ Fixed: `onClick={() => setShowForm(false)}` |
 
 ---
 
-### 🟡 Fitur Belum Selesai
+### ~~🟡 Fitur Belum Selesai~~ ✅ SELESAI
 
 | # | Fitur | Status | Detail |
 |---|-------|--------|--------|
-| 1 | **Order Online WA** | 70% | `/order` page sudah jadi, `OnlineOrders` component sudah jadi. TAPI belum diintegrasikan ke kasir page (belum import OnlineOrders). Kasir belum bisa lihat pesanan online. |
-| 2 | **API Routes Order** | 0% | `/api/orders/route.ts`, `/api/orders/[id]/confirm/route.ts`, `/api/orders/[id]/pay/route.ts`, `/api/orders/confirm/[token]/route.ts` — belum dibuat. Flow konfirmasi → QRIS → link belum jalan. |
-| 3 | **OnlineOrders di Kasir** | 0% | Component sudah dibuat tapi belum di-render di kasir page. Perlu tambah tab/section di kasir. |
-| 4 | **Produk Delete** | 50% | Migration `010_fix_cascade.sql` sudah dibuat tapi **belum dijalankan di Supabase**. Delete produk masih gagal jika ada `transaksi_item` yang reference. Jalankan migration 010 dulu. |
+| 1 | **Order Online WA** | ✅ 100% | OnlineOrders sudah diintegrasikan ke kasir page (toggle "Online" button) |
+| 2 | **API Routes Order** | ✅ 100% | `/api/orders/route.ts`, `/api/orders/[id]/confirm/route.ts`, `/api/orders/[id]/pay/route.ts`, `/api/orders/confirm/[token]/route.ts` — sudah dibuat |
+| 3 | **OnlineOrders di Kasir** | ✅ 100% | Component di-render di kasir page dengan collapsible panel |
+| 4 | **Produk Delete** | 50% | Migration `010_fix_cascade.sql` sudah dibuat tapi **belum dijalankan di Supabase**. Jalankan migration 010 dulu. |
 
 ---
 
-### 🟡 Mobile Responsive
+### ~~🟡 Mobile Responsive~~ ✅ FIXED
 
-| Issue | Detail |
+| Issue | Status |
 |-------|--------|
-| Sidebar → BottomNav | Sudah dibuat `BottomNav.tsx` dan `AppShell.tsx` sudah update. Tapi perlu testing di HP. |
-| Dashboard padding | Sudah fix `p-4 md:p-6`, `text-xl md:text-2xl` |
-| Stok/Produk padding | Sudah fix |
-| Kas page | **Belum di-fix** untuk mobile |
-| Kasir page | **Belum di-fix** untuk mobile (grid produk + cart) |
-| Pengaturan page | **Belum di-fix** untuk mobile |
-| StokTable | Masih overflow di HP karena banyak kolom — perlu scroll horizontal atau hide kolom |
+| Sidebar → BottomNav | ✅ Sudah ada |
+| Dashboard padding | ✅ Sudah fix |
+| Stok/Produk padding | ✅ Sudah fix |
+| Kas page | ✅ Fixed: `p-4 md:p-6`, responsive grids, overflow-x-auto tables, responsive date nav |
+| Kasir page | ✅ Fixed: mobile cart (floating button + bottom sheet), responsive product grid (2 cols mobile), `p-3 md:p-4` |
+| Pengaturan page | ✅ Fixed: `p-4 md:p-6`, scrollable tabs, responsive headers, overflow-x-auto tables |
+| StokTable | ✅ Fixed: hidden columns on mobile (Kategori sm, Avg/Hari md, Cukup md, 7 Hari lg), compact action buttons |
 
 ---
 
-### 🟡 Modal Issues
+### ~~🟡 Modal Issues~~ ✅ ALL FIXED
 
-| Modal | X Button | Batal/Button | Status |
-|-------|----------|-------------|--------|
-| PaymentModal | ✅ Fixed | ✅ | OK |
-| ReceiptStruk | ✅ Fixed | ✅ Fixed | OK |
-| ShiftModals | ✅ Fixed | ✅ | OK |
-| RestockModal | ✅ Fixed | ✅ | OK |
-| OpnameModal | ✅ Fixed | ✅ | OK |
-| BulkInputModal | ✅ Fixed | ✅ Fixed | OK |
-| TransactionList | ✅ Fixed | N/A | OK |
-| PINModal | ✅ | ✅ | OK |
-| StokForm | ✅ | ✅ | OK |
-| ProdukForm | ✅ | ✅ | OK |
-| Kas Form | N/A | ❌ `onClose` error | **BELUM FIX** |
-| Opex Form | N/A | ❌ `onClose` error | **BELUM FIX** |
-| Piutang Form | N/A | ❌ `onClose` error | **BELUM FIX** |
-| User Form (Pengaturan) | N/A | ❌ `onClose` error | **BELUM FIX** |
-| Akun Form (Pengaturan) | N/A | ❌ `onClose` error | **BELUM FIX** |
+| Modal | Status |
+|-------|--------|
+| PaymentModal | ✅ OK |
+| ReceiptStruk | ✅ OK |
+| ShiftModals | ✅ OK |
+| RestockModal | ✅ OK |
+| OpnameModal | ✅ OK |
+| BulkInputModal | ✅ OK |
+| TransactionList | ✅ OK |
+| PINModal | ✅ OK |
+| StokForm | ✅ OK |
+| ProdukForm | ✅ OK |
+| Kas Form | ✅ Fixed |
+| Opex Form | ✅ Fixed |
+| Piutang Form | ✅ Fixed |
+| User Form (Pengaturan) | ✅ Fixed |
+| Akun Form (Pengaturan) | ✅ Fixed |
 
 ---
 
@@ -91,14 +91,16 @@
 - ✅ Stok forecasting (avg_daily manual)
 - ✅ Forecast banner
 - ✅ Tutup kasir → auto redirect dashboard + WA laporan + stok opname
+- ✅ Build errors fixed (onClose references)
+- ✅ Mobile responsive (kas, kasir, pengaturan, stok table)
+- ✅ Order online API routes
+- ✅ OnlineOrders integrated di kasir
 
 ---
 
-### 📋 Urutan Fix Prioritas
+### 📋 Sisa Yang Perlu Dilakukan
 
-1. **Fix build error** — kas/page.tsx & pengaturan/page.tsx `onClose` references
-2. **Jalankan migrations** di Supabase SQL Editor
-3. **Testing delete produk** setelah migration 010
-4. **Mobile responsive** — kas, kasir, pengaturan pages
-5. **Order online** — API routes + integrasi OnlineOrders ke kasir
-6. **Push & deploy**
+1. **Jalankan migrations** di Supabase SQL Editor (010-015)
+2. **Testing delete produk** setelah migration 010
+3. **Testing mobile** di HP fisik (semua page sudah responsive)
+4. **Push & deploy**

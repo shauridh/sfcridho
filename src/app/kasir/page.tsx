@@ -11,11 +11,13 @@ import Cart from "@/components/kasir/Cart";
 import PaymentModal from "@/components/kasir/PaymentModal";
 import ReceiptStruk from "@/components/kasir/ReceiptStruk";
 import KategoriBar from "@/components/kasir/KategoriBar";
+import OnlineOrders from "@/components/kasir/OnlineOrders";
 import { ShiftOpenModal, ShiftCloseModal } from "@/components/kasir/ShiftModals";
 import { CartItem } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { getSettings } from "@/lib/whatsapp";
 import { sendWhatsApp, formatLaporanWA } from "@/lib/whatsapp";
+import { ShoppingBag, Globe } from "lucide-react";
 
 interface ReceiptData {
   items: CartItem[];
@@ -40,6 +42,8 @@ export default function KasirPage() {
   const [showPayment, setShowPayment] = useState(false);
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [showCloseShift, setShowCloseShift] = useState(false);
+  const [showMobileCart, setShowMobileCart] = useState(false);
+  const [showOnlineOrders, setShowOnlineOrders] = useState(false);
   const [shiftStats, setShiftStats] = useState({ totalTransaksi: 0, totalNominal: 0 });
 
   const fetchShiftStats = useCallback(async () => {
@@ -190,17 +194,53 @@ export default function KasirPage() {
   }
 
   return (
-    <div className="flex h-full">
-      <div className="flex-1 flex flex-col overflow-hidden p-4">
-        <div className="mb-4">
-          <KategoriBar kategoriList={kategoriList} active={filterKategori} onSelect={setFilterKategori} onReorder={handleReorderKategori} />
+    <div className="flex h-full relative">
+      <div className="flex-1 flex flex-col overflow-hidden p-3 md:p-4">
+        <div className="flex items-center gap-2 mb-3 md:mb-4">
+          <div className="flex-1 overflow-hidden">
+            <KategoriBar kategoriList={kategoriList} active={filterKategori} onSelect={setFilterKategori} onReorder={handleReorderKategori} />
+          </div>
+          <button
+            onClick={() => setShowOnlineOrders(!showOnlineOrders)}
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors touch-target ${showOnlineOrders ? "th-accent-bg text-white" : "th-card border th-border th-muted hover:th-text"}`}
+          >
+            <Globe size={14} /> Online
+          </button>
         </div>
+
+        {showOnlineOrders && (
+          <div className="mb-3 md:mb-4 th-card border th-border rounded-2xl p-3 md:p-4 max-h-[300px] overflow-auto">
+            <OnlineOrders />
+          </div>
+        )}
+
         <ProductGrid produk={filteredProduk} onAdd={addToCart} />
       </div>
 
-      <div className="w-[42%] min-w-[320px] border-l th-border">
+      <div className="hidden md:block w-[42%] min-w-[320px] border-l th-border">
         <Cart items={cart} total={total} onUpdateQty={updateQty} onClear={clearCart} onBayar={() => setShowPayment(true)} />
       </div>
+
+      {cart.length > 0 && (
+        <button
+          onClick={() => setShowMobileCart(true)}
+          className="md:hidden fixed bottom-20 right-4 z-40 th-accent-bg text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+        >
+          <ShoppingBag size={22} />
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-white th-accent text-[10px] font-bold rounded-full flex items-center justify-center border-2 th-accent-bg">
+            {cart.reduce((s, i) => s + i.qty, 0)}
+          </span>
+        </button>
+      )}
+
+      {showMobileCart && (
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col">
+          <div className="flex-1 bg-black/40" onClick={() => setShowMobileCart(false)} />
+          <div className="th-card border-t th-border rounded-t-2xl max-h-[80vh] flex flex-col">
+            <Cart items={cart} total={total} onUpdateQty={updateQty} onClear={() => { clearCart(); setShowMobileCart(false); }} onBayar={() => { setShowMobileCart(false); setShowPayment(true); }} />
+          </div>
+        </div>
+      )}
 
       {showPayment && <PaymentModal total={total} onClose={() => setShowPayment(false)} onBayar={handleBayar} loading={loadingTransaksi} />}
       {receipt && <ReceiptStruk receipt={receipt} onClose={() => setReceipt(null)} />}

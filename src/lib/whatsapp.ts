@@ -14,7 +14,7 @@ export async function updateSetting(key: string, value: string) {
   return supabase.from("settings").upsert({ key, value }, { onConflict: "key" });
 }
 
-export async function sendWhatsApp(message: string): Promise<{ success: boolean; error?: string }> {
+export async function sendWhatsApp(message: string, to?: string): Promise<{ success: boolean; error?: string }> {
   try {
     const settings = await getSettings();
     const apiKey = settings.wa_api_key;
@@ -26,13 +26,15 @@ export async function sendWhatsApp(message: string): Promise<{ success: boolean;
       return { success: false, error: "WhatsApp belum dikonfigurasi" };
     }
 
+    const targetPhone = to || phone;
+
     const resp = await fetch("/api/whatsapp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         api_key: apiKey,
         sender: sender,
-        number: phone,
+        number: targetPhone,
         message: message,
         footer: `Sent via ${storeName}`,
       }),

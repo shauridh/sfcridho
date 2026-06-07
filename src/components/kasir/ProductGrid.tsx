@@ -27,7 +27,7 @@ export default function ProductGrid({ produk, onAdd }: Props) {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
         {produk.map((p) => {
           const badgeClass = KATEGORI_BADGE[p.kategori] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
           const hasImage = p.gambar && p.gambar.length > 0;
@@ -39,11 +39,11 @@ export default function ProductGrid({ produk, onAdd }: Props) {
               className="th-card border th-border rounded-2xl overflow-hidden text-left transition-all active:scale-[0.97] hover:shadow-lg touch-target flex flex-col"
             >
               {hasImage ? (
-                <div className="relative w-full h-24 bg-gray-100 dark:bg-gray-800">
+                <div className="relative w-full h-20 sm:h-24 bg-gray-100 dark:bg-gray-800">
                   <img src={p.gambar!} alt={p.nama} className="w-full h-full object-cover" />
                 </div>
               ) : (
-                <div className="w-full h-24 th-surface flex items-center justify-center">
+                <div className="w-full h-20 sm:h-24 th-surface flex items-center justify-center">
                   <span className="text-3xl opacity-30">
                     {p.kategori === "Ayam" ? "🍗" : p.kategori === "Minuman" ? "🥤" : p.kategori === "Geprek" ? "🌶️" : p.kategori === "Paket" ? "📦" : "🍽️"}
                   </span>

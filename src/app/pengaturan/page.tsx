@@ -19,6 +19,7 @@ export default function PengaturanPage() {
   const [akunForm, setAkunForm] = useState({ nama: "", tipe: "kas_fisik", warna: "#6B7280" });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [waTestStatus, setWaTestStatus] = useState<string | null>(null);
   const [newPin, setNewPin] = useState("");
   const [pinSaved, setPinSaved] = useState(false);
@@ -156,13 +157,13 @@ export default function PengaturanPage() {
   ] as const;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold th-text">Pengaturan</h1>
-        <p className="text-sm th-text-secondary mt-1">Kelola konfigurasi aplikasi</p>
+        <h1 className="text-xl md:text-2xl font-bold th-text">Pengaturan</h1>
+        <p className="text-xs md:text-sm th-text-secondary mt-1">Kelola konfigurasi aplikasi</p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
         {tabs.map((t) => {
           const Icon = t.icon;
           return (
@@ -174,7 +175,7 @@ export default function PengaturanPage() {
       </div>
 
       {tab === "store" && (
-        <div className="th-card border th-border rounded-2xl p-5 shadow-sm max-w-lg space-y-4">
+        <div className="th-card border th-border rounded-2xl p-4 md:p-5 shadow-sm max-w-lg space-y-4">
           <h3 className="font-bold th-text">Profil Toko</h3>
           <div>
             <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Nama Toko</label>
@@ -183,18 +184,36 @@ export default function PengaturanPage() {
           <button onClick={() => handleSaveSettings({ store_name: settings.store_name })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
             {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan"}
           </button>
+
+          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-2">
+            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase">Link Order Online</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-sm font-mono text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-900 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-700 truncate">
+                {typeof window !== "undefined" ? `${window.location.origin}/order` : "/order"}
+              </code>
+              <button onClick={() => {
+                const url = `${window.location.origin}/order`;
+                navigator.clipboard.writeText(url);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors touch-target whitespace-nowrap">
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+            <p className="text-[10px] text-blue-500">Set link ini di auto-reply WhatsApp Gateway agar customer bisa langsung order</p>
+          </div>
         </div>
       )}
 
       {tab === "users" && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h3 className="font-bold th-text">Manajemen User</h3>
             <button onClick={() => { setEditingUser(null); setUserForm({ username: "", pin: "", nama: "", role: "kasir" }); setShowUserForm(true); }} className="flex items-center gap-2 px-4 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm touch-target">
               <Plus size={16} /> Tambah User
             </button>
           </div>
-          <div className="th-card border th-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="th-card border th-border rounded-2xl overflow-hidden shadow-sm overflow-x-auto">
             <table className="w-full">
               <thead><tr className="border-b th-border bg-red-50/30 dark:bg-red-950/10">
                 <th className="px-4 py-3 text-xs font-semibold th-muted uppercase text-left">Username</th>
@@ -226,7 +245,7 @@ export default function PengaturanPage() {
 
       {tab === "akun" && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="font-bold th-text">Media Penyimpanan</h3>
               <p className="text-xs th-text-secondary mt-0.5">Kelola rekening, e-wallet, dan kas fisik</p>
@@ -235,7 +254,7 @@ export default function PengaturanPage() {
               <Plus size={16} /> Tambah Akun
             </button>
           </div>
-          <div className="th-card border th-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="th-card border th-border rounded-2xl overflow-hidden shadow-sm overflow-x-auto">
             <table className="w-full">
               <thead><tr className="border-b th-border bg-red-50/30 dark:bg-red-950/10">
                 <th className="px-4 py-3 text-xs font-semibold th-muted uppercase text-left">Warna</th>
@@ -267,7 +286,7 @@ export default function PengaturanPage() {
       )}
 
       {tab === "wa" && (
-        <div className="th-card border th-border rounded-2xl p-5 shadow-sm max-w-lg space-y-4">
+        <div className="th-card border th-border rounded-2xl p-4 md:p-5 shadow-sm max-w-lg space-y-4">
           <h3 className="font-bold th-text">WhatsApp Gateway</h3>
           <p className="text-xs th-text-secondary">Konfigurasi untuk mengirim laporan harian otomatis ke WhatsApp</p>
           <div>
@@ -309,7 +328,7 @@ export default function PengaturanPage() {
       )}
 
       {tab === "pin" && (
-        <div className="th-card border th-border rounded-2xl p-5 shadow-sm max-w-lg space-y-4">
+        <div className="th-card border th-border rounded-2xl p-4 md:p-5 shadow-sm max-w-lg space-y-4">
           <h3 className="font-bold th-text">Ubah PIN Admin</h3>
           <p className="text-xs th-text-secondary">PIN digunakan untuk mengakses halaman Kas dan Pengaturan.</p>
           <div>
@@ -331,7 +350,7 @@ export default function PengaturanPage() {
       )}
 
       {tab === "qris" && (
-        <div className="th-card border th-border rounded-2xl p-5 shadow-sm max-w-lg space-y-4">
+        <div className="th-card border th-border rounded-2xl p-4 md:p-5 shadow-sm max-w-lg space-y-4">
           <h3 className="font-bold th-text">Pengaturan QRIS</h3>
           <p className="text-xs th-text-secondary">Upload gambar QR code QRIS statis dari merchant. Sistem akan otomatis decode dan generate QR dinamis sesuai nominal transaksi di kasir.</p>
 
@@ -405,7 +424,7 @@ export default function PengaturanPage() {
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+                <button type="button" onClick={() => setShowUserForm(false)} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
                 <button onClick={handleSaveUser} disabled={saving} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </div>
@@ -438,7 +457,7 @@ export default function PengaturanPage() {
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+                <button type="button" onClick={() => setShowAkunForm(false)} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
                 <button onClick={handleSaveAkun} disabled={saving} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </div>

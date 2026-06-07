@@ -27,8 +27,12 @@ export default function OnlineOrders() {
     const settings = await getSettings();
     const storeName = settings.store_name || "Sabana FC";
     const items = order.items.map((i) => `${i.nama} x${i.qty}`).join(", ");
-    const msg = `*${storeName}*\nPesanan Anda dikonfirmasi!\n\n${items}\nTotal: Rp ${order.total.toLocaleString("id-ID")}\n\nSilakan lakukan pembayaran. QRIS akan dikirim berikutnya.`;
-    await sendWhatsApp(msg);
+
+    const msgCustomer = `*${storeName}*\nPesanan Anda dikonfirmasi!\n\n${items}\nTotal: Rp ${order.total.toLocaleString("id-ID")}\n\nSilakan lakukan pembayaran. QRIS akan dikirim berikutnya.`;
+    await sendWhatsApp(msgCustomer, order.phone);
+
+    const msgOwner = `*${storeName}*\nPesanan online dikonfirmasi:\n${order.nama} (${order.phone})\nTotal: Rp ${order.total.toLocaleString("id-ID")}`;
+    await sendWhatsApp(msgOwner);
 
     fetchOrders();
   };
@@ -46,8 +50,12 @@ export default function OnlineOrders() {
 
     const storeName = settings.store_name || "Sabana FC";
     const confirmUrl = `${window.location.origin}/api/orders/confirm/${order.confirm_token}`;
-    const msg = `*${storeName}*\nSilakan scan QRIS berikut untuk pembayaran:\n\nTotal: Rp ${order.total.toLocaleString("id-ID")}\n\nSetelah bayar, klik link ini untuk konfirmasi:\n${confirmUrl}`;
-    await sendWhatsApp(msg);
+
+    const msgCustomer = `*${storeName}*\nSilakan scan QRIS berikut untuk pembayaran:\n\nTotal: Rp ${order.total.toLocaleString("id-ID")}\n\nSetelah bayar, klik link ini untuk konfirmasi:\n${confirmUrl}`;
+    await sendWhatsApp(msgCustomer, order.phone);
+
+    const msgOwner = `*${storeName}*\nQRIS dikirim ke ${order.nama} (${order.phone})\nTotal: Rp ${order.total.toLocaleString("id-ID")}`;
+    await sendWhatsApp(msgOwner);
 
     alert("QRIS & link konfirmasi terkirim ke customer");
     fetchOrders();

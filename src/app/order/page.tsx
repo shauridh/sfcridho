@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
 import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle } from "lucide-react";
+import { sendWhatsApp, getSettings } from "@/lib/whatsapp";
 
 interface MenuItem {
   id: string;
@@ -71,6 +72,13 @@ export default function OrderPage() {
         items, catatan: catatan.trim() || null, total, status: "pending",
       });
       if (err) throw err;
+
+      const settings = await getSettings();
+      const storeName = settings.store_name || "Sabana FC";
+      const itemsList = cart.map((c) => `${c.nama} x${c.qty}`).join(", ");
+      const ownerMsg = `*${storeName}*\nPesanan online baru!\n\nDari: ${nama.trim()}\nNo: ${phone.trim()}\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}\n\nBuka kasir untuk konfirmasi.`;
+      await sendWhatsApp(ownerMsg);
+
       setSubmitted(true);
     } catch (err: any) {
       setError(err.message || "Gagal mengirim pesanan");

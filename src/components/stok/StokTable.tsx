@@ -36,9 +36,13 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
         <table className="w-full">
           <thead>
             <tr className="border-b th-border text-left bg-red-50/50 dark:bg-red-950/20">
-              {["Nama", "Kategori", "Stok", "Avg/Hari", "Cukup", "7 Hari", "Status"].map((h) => (
-                <th key={h} className="px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">{h}</th>
-              ))}
+              <th className="px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">Nama</th>
+              <th className="hidden sm:table-cell px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">Kategori</th>
+              <th className="px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">Stok</th>
+              <th className="hidden md:table-cell px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">Avg/Hari</th>
+              <th className="hidden md:table-cell px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">Cukup</th>
+              <th className="hidden lg:table-cell px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">7 Hari</th>
+              <th className="px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">Status</th>
               <th className="px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider text-right">Aksi</th>
             </tr>
           </thead>
@@ -53,21 +57,21 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
               return (
                 <tr key={b.id} className={`border-b th-border/50 hover:bg-red-50/30 dark:hover:bg-red-950/10 transition-colors ${rowWarning}`}>
                   <td className="px-3 py-3 text-sm font-medium th-text">{b.nama}</td>
-                  <td className="px-3 py-3 text-xs th-text-secondary">{b.kategori}</td>
+                  <td className="hidden sm:table-cell px-3 py-3 text-xs th-text-secondary">{b.kategori}</td>
                   <td className="px-3 py-3 text-sm font-semibold th-text">
                     {tampilanStok(b.stok, b.sat_dasar, b.isi_per_pak, b.sat_beli)}
                     {(b.stok_goreng || 0) > 0 && (
                       <span className="block text-[10px] font-medium text-orange-500">{b.stok_goreng} {b.sat_dasar} goreng</span>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-sm th-text-secondary whitespace-nowrap">
+                  <td className="hidden md:table-cell px-3 py-3 text-sm th-text-secondary whitespace-nowrap">
                     {f && f.avgDaily > 0 ? (
                       <span>{(f.avgDaily / (b.isi_per_pak || 1)).toFixed(1)} {b.sat_beli}/hari</span>
                     ) : (
                       <span className="th-muted">-</span>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-sm">
+                  <td className="hidden md:table-cell px-3 py-3 text-sm">
                     {f && f.avgDaily > 0 ? (
                       <span className={`font-semibold ${daysLeft < 3 ? "text-danger" : daysLeft < 7 ? "text-warning" : "text-success"}`}>
                         {daysLeft === Infinity ? "\u221E" : `${daysLeft} hari`}
@@ -76,7 +80,7 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
                       <span className="th-muted">\u221E</span>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-sm">
+                  <td className="hidden lg:table-cell px-3 py-3 text-sm">
                     {f && f.avgDaily > 0 ? (
                       f.reorderQty > 0 ? (
                         <span className="text-danger font-semibold">+{Math.ceil(f.reorderQty / (b.isi_per_pak || 1))} {b.sat_beli}</span>
@@ -96,14 +100,14 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
                   <td className="px-3 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button onClick={() => onRestock(b)} className="flex items-center gap-1 px-2 py-1.5 bg-green-50 dark:bg-green-950/30 text-success rounded-lg text-xs font-medium hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors touch-target border border-green-200 dark:border-green-800">
-                        <PlusCircle size={12} /> Stok
+                        <PlusCircle size={12} /> <span className="hidden sm:inline">Stok</span>
                       </button>
                       {b.kategori === "Ayam" && (
-                        <button onClick={() => onGoreng(b)} className="flex items-center gap-1 px-2 py-1.5 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 rounded-lg text-xs font-medium hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors touch-target border border-orange-200 dark:border-orange-800">
+                        <button onClick={() => onGoreng(b)} className="hidden sm:flex items-center gap-1 px-2 py-1.5 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 rounded-lg text-xs font-medium hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors touch-target border border-orange-200 dark:border-orange-800">
                           <Flame size={12} /> Goreng
                         </button>
                       )}
-                      <button onClick={() => onOpname(b)} className="flex items-center gap-1 px-2 py-1.5 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors touch-target border border-blue-200 dark:border-blue-800">
+                      <button onClick={() => onOpname(b)} className="hidden sm:flex items-center gap-1 px-2 py-1.5 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors touch-target border border-blue-200 dark:border-blue-800">
                         <ClipboardCheck size={12} /> Opname
                       </button>
                       <button onClick={() => onEdit(b)} className="p-1.5 th-muted hover:th-accent rounded-lg hover:th-surface transition-colors touch-target"><Edit3 size={14} /></button>
