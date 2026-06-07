@@ -6,8 +6,10 @@ export interface BahanBaku {
   isi_per_pak: number;
   sat_dasar: string;
   stok: number;
+  stok_goreng: number;
   reorder_point: number;
   harga_beli: number;
+  avg_daily: number;
   created_at: string;
 }
 
@@ -16,6 +18,29 @@ export interface ForecastItem extends BahanBaku {
   daysRemaining: number;
   stockNeeded7d: number;
   reorderQty: number;
+}
+
+export interface Kategori {
+  id: string;
+  nama: string;
+  tipe: "stok" | "produk";
+  urutan: number;
+  created_at: string;
+}
+
+export interface Order {
+  id: string;
+  nama: string;
+  phone: string;
+  alamat: string | null;
+  items: { nama: string; qty: number; harga: number; subtotal: number }[];
+  catatan: string | null;
+  total: number;
+  status: "pending" | "confirmed" | "paid" | "done" | "cancelled";
+  qris_string: string | null;
+  confirm_token: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Produk {

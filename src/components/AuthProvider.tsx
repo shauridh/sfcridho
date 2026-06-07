@@ -1,74 +1,78 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from "react";
-import { AppUser } from "@/lib/types";
-import { supabase } from "@/lib/supabase";
+import { getSettings, updateSetting } from "@/lib/whatsapp";
 
 interface AuthContextType {
-  user: AppUser | null;
-  loading: boolean;
-  login: (username: string, pin: string) => Promise<{ error: string | null }>;
-  logout: () => void;
-  isOwner: boolean;
-  isKasir: boolean;
+  pinVerified: boolean;
+  verifyPin: (pin: string) => Promise<boolean>;
+  changePin: (newPin: string) => Promise<void>;
+  isProtectedRoute: (path: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  login: async () => ({ error: null }),
-  logout: () => {},
-  isOwner: false,
-  isKasir: false,
+  pinVerified: false,
+  verifyPin: async () => false,
+  changePin: async () => {},
+  isProtectedRoute: () => false,
 });
 
+const PROTECTED_ROUTES = ["/kas", "/pengaturan"];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AppUser | null>(null);
+  const [pinVerified, setPinVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("pos_user");
-      if (saved) {
-        setUser(JSON.parse(saved));
-      }
+      const session = localStorage.getItem("pin_session");
+      if (session === "verified") setPinVerified(true);
     } catch {}
     setLoading(false);
   }, []);
 
-  const login = useCallback(async (username: string, pin: string) => {
+  const verifyPin = useCallback(async (pin: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.rpc("verify_login", {
-        p_username: username,
-        p_pin: pin,
-      });
-
-      if (error || !data || data.length === 0) {
-        return { error: "Username atau PIN salah" };
+      const settings = await getSettings();
+      const storedPin = settings.admin_pin || "271222";
+      if (pin === storedPin) {
+        setPinVerified(true);
+        localStorage.setItem("pin_session", "verified");
+        return true;
       }
-
-      const u: AppUser = data[0];
-      setUser(u);
-      localStorage.setItem("pos_user", JSON.stringify(u));
-      return { error: null };
+      return false;
     } catch {
-      return { error: "Gagal terhubung ke server" };
+      if (pin === "271222") {
+        setPinVerified(true);
+        localStorage.setItem("pin_session", "verified");
+        return true;
+      }
+      return false;
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem("pos_user");
+  const changePin = useCallback(async (newPin: string) => {
+    await updateSetting("admin_pin", newPin);
+  }, []);
+
+  const isProtectedRoute = useCallback((path: string) => {
+    return PROTECTED_ROUTES.some((r) => path.startsWith(r));
   }, []);
 
   const value = useMemo(() => ({
-    user,
-    loading,
-    login,
-    logout,
-    isOwner: user?.role === "owner",
-    isKasir: user?.role === "kasir",
-  }), [user, loading, login, logout]);
+    pinVerified,
+    verifyPin,
+    changePin,
+    isProtectedRoute,
+  }), [pinVerified, verifyPin, changePin, isProtectedRoute]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center th-bg">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>

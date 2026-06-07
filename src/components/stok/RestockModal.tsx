@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { BahanBaku } from "@/lib/types";
@@ -28,14 +28,14 @@ export default function RestockModal({ bahan, onClose, onRestock }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
       <div
         className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-5 border-b border-border">
           <h2 className="text-lg font-bold th-text">Restock: {bahan.nama}</h2>
-          <button onClick={onClose} className="p-2 th-muted hover:th-text rounded-lg">
+          <button  className="p-2 th-muted hover:th-text rounded-lg">
             <X size={20} />
           </button>
         </div>
@@ -94,7 +94,7 @@ export default function RestockModal({ bahan, onClose, onRestock }: Props) {
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              
               className="px-4 py-2.5 text-sm font-medium th-muted hover:th-text transition-colors touch-target"
             >
               Batal
@@ -112,3 +112,4 @@ export default function RestockModal({ bahan, onClose, onRestock }: Props) {
     </div>
   );
 }
+

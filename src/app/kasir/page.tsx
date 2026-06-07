@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useProduk } from "@/hooks/useProduk";
 import { useTransaksi } from "@/hooks/useTransaksi";
 import { useShift } from "@/hooks/useShift";
-import { useAuth } from "@/components/AuthProvider";
 import { useShiftAction } from "@/components/ShiftActionContext";
 import ProductGrid from "@/components/kasir/ProductGrid";
 import Cart from "@/components/kasir/Cart";
@@ -32,7 +31,6 @@ export default function KasirPage() {
   const { produk, resepMap, loading: loadingProduk } = useProduk();
   const { loading: loadingTransaksi, prosesPembayaran, getLaporanHariIni } = useTransaksi();
   const { activeShift, isOpen, loading: loadingShift, lastUangDrawer, bukaShift, tutupShift } = useShift();
-  const { user } = useAuth();
   const { registerCloseAction, unregisterCloseAction } = useShiftAction();
   const router = useRouter();
 
@@ -106,7 +104,7 @@ export default function KasirPage() {
   const handleBayar = async (bayar: number, metode: "tunai" | "qris") => {
     const { error, transaksiId } = await prosesPembayaran(cart, total, bayar, resepMap, metode);
     if (!error && transaksiId) {
-      if (activeShift) await supabase.from("transaksi").update({ shift_id: activeShift.id, user_id: user?.id }).eq("id", transaksiId);
+      if (activeShift) await supabase.from("transaksi").update({ shift_id: activeShift.id }).eq("id", transaksiId);
       setReceipt({ items: [...cart], total, bayar, kembalian: bayar - total, transaksiId, waktu: new Date(), metode });
       setCart([]);
       setShowPayment(false);

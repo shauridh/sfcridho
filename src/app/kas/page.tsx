@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useKas } from "@/hooks/useKas";
@@ -182,7 +182,7 @@ export default function KasPage() {
               <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
                 <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase mb-1">Total Kas</p>
                 <p className="text-xl font-bold text-green-700 dark:text-green-300">{formatRupiah(totalKasAll)}</p>
-                <p className="text-[10px] text-green-500 mt-1">Akumulasi masuk − keluar</p>
+                <p className="text-[10px] text-green-500 mt-1">Akumulasi masuk âˆ’ keluar</p>
               </div>
               <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
                 <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase mb-1">Opex / Bulan</p>
@@ -202,7 +202,7 @@ export default function KasPage() {
               <div className={`rounded-xl p-4 border ${sisaBersih >= 0 ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"}`}>
                 <p className={`text-xs font-semibold uppercase mb-1 ${sisaBersih >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>Sisa Bersih</p>
                 <p className={`text-xl font-bold ${sisaBersih >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>{formatRupiah(sisaBersih)}</p>
-                <p className={`text-[10px] mt-1 ${sisaBersih >= 0 ? "text-emerald-500" : "text-red-500"}`}>Kas − Opex − Cicilan</p>
+                <p className={`text-[10px] mt-1 ${sisaBersih >= 0 ? "text-emerald-500" : "text-red-500"}`}>Kas âˆ’ Opex âˆ’ Cicilan</p>
               </div>
             </div>
           </div>
@@ -218,12 +218,12 @@ export default function KasPage() {
                 <span className="font-semibold text-success">{formatRupiah(totalKasAll)}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b th-border/30">
-                <span className="th-text-secondary">− Opex Bulanan</span>
-                <span className="font-semibold text-warning">−{formatRupiah(totalOpex)}</span>
+                <span className="th-text-secondary">âˆ’ Opex Bulanan</span>
+                <span className="font-semibold text-warning">âˆ’{formatRupiah(totalOpex)}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b th-border/30">
-                <span className="th-text-secondary">− Cicilan Hutang / Bulan</span>
-                <span className="font-semibold text-danger">−{formatRupiah(totalCicilan)}</span>
+                <span className="th-text-secondary">âˆ’ Cicilan Hutang / Bulan</span>
+                <span className="font-semibold text-danger">âˆ’{formatRupiah(totalCicilan)}</span>
               </div>
               {totalPiutangBelum > 0 && (
                 <div className="flex justify-between py-1.5 border-b th-border/30">
@@ -260,7 +260,7 @@ export default function KasPage() {
               <thead><tr className="border-b th-border bg-red-50/30 dark:bg-red-950/10">
                 <th className="px-5 py-3 text-xs font-semibold th-muted uppercase text-left">Waktu</th>
                 <th className="px-5 py-3 text-xs font-semibold th-muted uppercase text-left">Tipe</th>
-                <th className="px-5 py-3 text-xs font-semibold th-muted uppercase text-left">Dari → Ke</th>
+                <th className="px-5 py-3 text-xs font-semibold th-muted uppercase text-left">Dari â†’ Ke</th>
                 <th className="px-5 py-3 text-xs font-semibold th-muted uppercase text-left">Kategori</th>
                 <th className="px-5 py-3 text-xs font-semibold th-muted uppercase text-left">Keterangan</th>
                 <th className="px-5 py-3 text-xs font-semibold th-muted uppercase text-right">Nominal</th>
@@ -278,7 +278,7 @@ export default function KasPage() {
                       {sumberNama || tujuanNama ? (
                         <span className="flex items-center gap-1">
                           {sumberNama && <span className="font-medium th-text">{sumberNama}</span>}
-                          {(sumberNama && tujuanNama) && <span className="th-muted">→</span>}
+                          {(sumberNama && tujuanNama) && <span className="th-muted">â†’</span>}
                           {tujuanNama && <span className="font-medium th-text">{tujuanNama}</span>}
                         </span>
                       ) : <span className="th-muted">-</span>}
@@ -398,7 +398,7 @@ export default function KasPage() {
       )}
 
       {showForm && (
-        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
+        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
           <div className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="p-5 border-b th-border"><h2 className="text-lg font-bold th-text">{tipe === "masuk" ? "Kas Masuk" : "Kas Keluar"}</h2></div>
             <form onSubmit={handleSubmitKas} className="p-5 space-y-4">
@@ -412,7 +412,7 @@ export default function KasPage() {
               <div><label className="block text-xs font-semibold th-muted uppercase mb-1.5">Kategori</label><select value={kategori} onChange={(e) => setKategori(e.target.value)} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent">{KATEGORI_KAS.map((k) => <option key={k} value={k}>{k}</option>)}</select></div>
               <div><label className="block text-xs font-semibold th-muted uppercase mb-1.5">Keterangan</label><input type="text" value={keterangan} onChange={(e) => setKeterangan(e.target.value)} required className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="Contoh: Beli minyak goreng" /></div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2.5 text-sm font-medium th-muted touch-target">Batal</button>
+                <button type="button"  className="px-4 py-2.5 text-sm font-medium th-muted touch-target">Batal</button>
                 <button type="submit" disabled={saving} className={`px-6 py-2.5 text-white rounded-xl font-semibold text-sm touch-target ${tipe === "masuk" ? "bg-success hover:bg-green-700" : "bg-accent hover:opacity-90"} disabled:opacity-50`}>{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </form>
@@ -421,7 +421,7 @@ export default function KasPage() {
       )}
 
       {showOpexForm && (
-        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={() => setShowOpexForm(false)}>
+        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
           <div className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="p-5 border-b th-border"><h2 className="text-lg font-bold th-text">{editingOpex ? "Edit Opex" : "Tambah Opex"}</h2></div>
             <div className="p-5 space-y-4">
@@ -432,7 +432,7 @@ export default function KasPage() {
                 <div><label className="block text-xs font-semibold th-muted uppercase mb-1.5">Tgl Jatuh Tempo</label><input type="number" min="1" max="31" value={opexForm.jatuh_tempo} onChange={(e) => setOpexForm({ ...opexForm, jatuh_tempo: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="1-31" /></div>
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowOpexForm(false)} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+                <button  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
                 <button onClick={handleSaveOpex} disabled={saving} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </div>
@@ -441,7 +441,7 @@ export default function KasPage() {
       )}
 
       {showPiutangForm && (
-        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={() => setShowPiutangForm(false)}>
+        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
           <div className="th-card border th-border rounded-2xl w-full max-w-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="p-5 border-b th-border"><h2 className="text-lg font-bold th-text">{editingPiutang ? "Edit" : "Tambah"} Hutang/Piutang</h2></div>
             <div className="p-5 space-y-4">
@@ -472,7 +472,7 @@ export default function KasPage() {
               <div><label className="block text-xs font-semibold th-muted uppercase mb-1.5">Keterangan</label><input type="text" value={piutangForm.keterangan} onChange={(e) => setPiutangForm({ ...piutangForm, keterangan: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="Opsional" /></div>
               <div><label className="block text-xs font-semibold th-muted uppercase mb-1.5">Jatuh Tempo</label><input type="date" value={piutangForm.jatuh_tempo} onChange={(e) => setPiutangForm({ ...piutangForm, jatuh_tempo: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" /></div>
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowPiutangForm(false)} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+                <button  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
                 <button onClick={handleSavePiutang} disabled={saving} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </div>
@@ -482,3 +482,4 @@ export default function KasPage() {
     </div>
   );
 }
+

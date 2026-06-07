@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { formatRupiah, formatWaktu } from "@/lib/utils";
 import { CartItem } from "@/lib/types";
@@ -22,7 +22,7 @@ export default function ReceiptStruk({ receipt, onClose }: Props) {
   const { items, total, bayar, kembalian, transaksiId, waktu } = receipt;
 
   return (
-    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
       <div className="th-card rounded-2xl w-full max-w-sm shadow-xl overflow-hidden border th-border" onClick={(e) => e.stopPropagation()}>
         <div className="th-accent-bg text-white text-center py-4 px-5">
           <h2 className="text-lg font-bold tracking-wide">SABANA FRIED CHICKEN</h2>
@@ -51,9 +51,10 @@ export default function ReceiptStruk({ receipt, onClose }: Props) {
         </div>
         <div className="px-5 py-4 text-center">
           <p className="text-sm th-text-secondary mb-4">Terima Kasih</p>
-          <button onClick={onClose} className="w-full py-3 th-accent-bg text-white rounded-xl font-bold text-sm hover:opacity-90 transition-colors touch-target">Transaksi Baru</button>
+          <button  className="w-full py-3 th-accent-bg text-white rounded-xl font-bold text-sm hover:opacity-90 transition-colors touch-target">Transaksi Baru</button>
         </div>
       </div>
     </div>
   );
 }
+

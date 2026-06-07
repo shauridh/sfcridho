@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -92,14 +92,14 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
   };
 
   return (
-    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
       <div className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b th-border">
           <div className="flex items-center gap-2">
             <Unlock size={20} className="th-accent" />
             <h2 className="text-lg font-bold th-text">Tutup Kasir</h2>
           </div>
-          <button onClick={onClose} className="p-2 th-muted hover:th-text"><X size={20} /></button>
+          <button  className="p-2 th-muted hover:th-text"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -136,7 +136,7 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
           {error && <p className="text-sm text-danger text-center">{error}</p>}
 
           <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+            <button type="button"  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
             <button type="submit" disabled={loading} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">
               {loading ? "Menutup..." : "Tutup Kasir"}
             </button>
@@ -146,3 +146,4 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
     </div>
   );
 }
+

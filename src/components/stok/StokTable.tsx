@@ -2,7 +2,7 @@
 
 import { BahanBaku, ForecastItem, getStokStatus, getStokColor, getStokBgColor } from "@/lib/types";
 import { tampilanStok, formatRupiah } from "@/lib/utils";
-import { Edit3, PlusCircle, Trash2, ClipboardCheck } from "lucide-react";
+import { Edit3, PlusCircle, Trash2, ClipboardCheck, Flame } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
@@ -11,10 +11,11 @@ interface Props {
   onEdit: (b: BahanBaku) => void;
   onRestock: (b: BahanBaku) => void;
   onOpname: (b: BahanBaku) => void;
+  onGoreng: (b: BahanBaku) => void;
   onDelete: (id: string) => void;
 }
 
-export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOpname, onDelete }: Props) {
+export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOpname, onGoreng, onDelete }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const forecastMap = new Map(forecast.map((f) => [f.id, f]));
@@ -53,7 +54,12 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
                 <tr key={b.id} className={`border-b th-border/50 hover:bg-red-50/30 dark:hover:bg-red-950/10 transition-colors ${rowWarning}`}>
                   <td className="px-3 py-3 text-sm font-medium th-text">{b.nama}</td>
                   <td className="px-3 py-3 text-xs th-text-secondary">{b.kategori}</td>
-                  <td className="px-3 py-3 text-sm font-semibold th-text">{tampilanStok(b.stok, b.sat_dasar, b.isi_per_pak, b.sat_beli)}</td>
+                  <td className="px-3 py-3 text-sm font-semibold th-text">
+                    {tampilanStok(b.stok, b.sat_dasar, b.isi_per_pak, b.sat_beli)}
+                    {(b.stok_goreng || 0) > 0 && (
+                      <span className="block text-[10px] font-medium text-orange-500">{b.stok_goreng} {b.sat_dasar} goreng</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-sm th-text-secondary">
                     {f && f.avgDaily > 0 ? (
                       <span>{f.avgDaily.toFixed(1)} {b.sat_dasar}</span>
@@ -92,6 +98,11 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
                       <button onClick={() => onRestock(b)} className="flex items-center gap-1 px-2 py-1.5 bg-green-50 dark:bg-green-950/30 text-success rounded-lg text-xs font-medium hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors touch-target border border-green-200 dark:border-green-800">
                         <PlusCircle size={12} /> Stok
                       </button>
+                      {b.kategori === "Ayam" && (
+                        <button onClick={() => onGoreng(b)} className="flex items-center gap-1 px-2 py-1.5 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 rounded-lg text-xs font-medium hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors touch-target border border-orange-200 dark:border-orange-800">
+                          <Flame size={12} /> Goreng
+                        </button>
+                      )}
                       <button onClick={() => onOpname(b)} className="flex items-center gap-1 px-2 py-1.5 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors touch-target border border-blue-200 dark:border-blue-800">
                         <ClipboardCheck size={12} /> Opname
                       </button>

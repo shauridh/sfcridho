@@ -6,7 +6,6 @@ import { BahanBaku, ForecastItem } from "@/lib/types";
 
 export function useStok() {
   const [bahanBaku, setBahanBaku] = useState<BahanBaku[]>([]);
-  const [forecast, setForecast] = useState<ForecastItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchBahanBaku = useCallback(async () => {
@@ -25,41 +24,15 @@ export function useStok() {
     fetchBahanBaku();
   }, [fetchBahanBaku]);
 
-  const fetchForecast = useCallback(async () => {
-    if (bahanBaku.length === 0) return;
-
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const { data: logs } = await supabase
-      .from("stok_log")
-      .select("bahan_id, qty, waktu")
-      .eq("tipe", "deduct")
-      .gte("waktu", sevenDaysAgo.toISOString());
-
-    const usageMap: Record<string, { total: number; days: Set<string> }> = {};
-    (logs || []).forEach((l: any) => {
-      if (!usageMap[l.bahan_id]) usageMap[l.bahan_id] = { total: 0, days: new Set() };
-      usageMap[l.bahan_id].total += Math.abs(l.qty);
-      usageMap[l.bahan_id].days.add(new Date(l.waktu).toDateString());
-    });
-
-    const result: ForecastItem[] = bahanBaku.map((b) => {
-      const usage = usageMap[b.id];
-      const activeDays = usage ? usage.days.size : 0;
-      const avgDaily = usage && activeDays > 0 ? usage.total / activeDays : 0;
+  const getForecast = useCallback((): ForecastItem[] => {
+    return bahanBaku.map((b) => {
+      const avgDaily = b.avg_daily || 0;
       const daysRemaining = avgDaily > 0 ? Math.floor(b.stok / avgDaily) : Infinity;
       const stockNeeded7d = Math.ceil(avgDaily * 7);
       const reorderQty = Math.max(0, stockNeeded7d - b.stok);
       return { ...b, avgDaily, daysRemaining, stockNeeded7d, reorderQty };
     });
-
-    setForecast(result);
   }, [bahanBaku]);
-
-  useEffect(() => {
-    fetchForecast();
-  }, [fetchForecast]);
 
   const tambahBahan = async (bahan: Omit<BahanBaku, "id" | "created_at">) => {
     const { error } = await supabase.from("bahan_baku").insert(bahan);
@@ -132,9 +105,37 @@ export function useStok() {
     (b) => b.stok <= b.reorder_point
   ).length;
 
+  const goreng = async (id: string, jumlahKantong: number) => {
+    const bahan = bahanBaku.find((b) => b.id === id);
+    if (!bahan) return { error: new Error("Bahan tidak ditemukan") };
+
+    const potongHasil = jumlahKantong * bahan.isi_per_pak;
+    if (bahan.stok < potongHasil) return { error: new Error("Stok mentah tidak cukup") };
+
+    const stokMentahBaru = bahan.stok - potongHasil;
+    const stokGorengBaru = (bahan.stok_goreng || 0) + potongHasil;
+
+    const { error: updateError } = await supabase
+      .from("bahan_baku")
+      .update({ stok: stokMentahBaru, stok_goreng: stokGorengBaru })
+      .eq("id", id);
+
+    if (updateError) return { error: updateError };
+
+    await supabase.from("stok_log").insert({
+      bahan_id: id,
+      tipe: "goreng",
+      qty: potongHasil,
+      referensi: `Goreng ${jumlahKantong} kantong (${potongHasil} ${bahan.sat_dasar})`,
+    });
+
+    await fetchBahanBaku();
+    return { error: null };
+  };
+
   return {
     bahanBaku,
-    forecast,
+    forecast: getForecast(),
     loading,
     alertCount,
     tambahBahan,
@@ -142,6 +143,7 @@ export function useStok() {
     hapusBahan,
     restock,
     opname,
+    goreng,
     refresh: fetchBahanBaku,
   };
 }

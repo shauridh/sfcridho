@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { formatRupiah, formatWaktu } from "@/lib/utils";
@@ -59,8 +59,8 @@ export default function TransactionList({ transaksiList }: Props) {
                   <td className="px-5 py-3 text-xs th-muted font-mono">{t.id.slice(0, 8)}</td>
                   <td className="px-5 py-3 text-sm th-text">
                     {t.items.length > 2
-                      ? `${t.items[0].nama_snapshot} ×${t.items[0].qty}, ${t.items[1].nama_snapshot} ×${t.items[1].qty}, +${t.items.length - 2} lainnya`
-                      : t.items.map((i) => `${i.nama_snapshot} ×${i.qty}`).join(", ")}
+                      ? `${t.items[0].nama_snapshot} Ã—${t.items[0].qty}, ${t.items[1].nama_snapshot} Ã—${t.items[1].qty}, +${t.items.length - 2} lainnya`
+                      : t.items.map((i) => `${i.nama_snapshot} Ã—${i.qty}`).join(", ")}
                   </td>
                   <td className="px-5 py-3 text-xs th-muted">
                     <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${t.metode_bayar === "qris" ? "bg-blue-50 dark:bg-blue-950/30 text-blue-600" : "bg-green-50 dark:bg-green-950/30 text-green-600"}`}>
@@ -80,14 +80,14 @@ export default function TransactionList({ transaksiList }: Props) {
       </div>
 
       {selected && (
-        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={() => setSelected(null)}>
+        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
           <div className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b th-border">
               <div className="flex items-center gap-2">
                 <Receipt size={18} className="th-accent" />
                 <h2 className="text-lg font-bold th-text">Detail Transaksi</h2>
               </div>
-              <button onClick={() => setSelected(null)} className="p-2 th-muted hover:th-text"><X size={20} /></button>
+              <button  className="p-2 th-muted hover:th-text"><X size={20} /></button>
             </div>
 
             <div className="p-5 space-y-4">
@@ -114,7 +114,7 @@ export default function TransactionList({ transaksiList }: Props) {
                     <div key={item.id} className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium th-text truncate">{item.nama_snapshot}</p>
-                        <p className="text-xs th-muted">{formatRupiah(item.harga)} × {item.qty}</p>
+                        <p className="text-xs th-muted">{formatRupiah(item.harga)} Ã— {item.qty}</p>
                       </div>
                       <p className="text-sm font-bold th-accent ml-3">{formatRupiah(item.harga * item.qty)}</p>
                     </div>
@@ -143,3 +143,4 @@ export default function TransactionList({ transaksiList }: Props) {
     </>
   );
 }
+

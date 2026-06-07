@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Produk, Resep, BahanBaku, KATEGORI_PRODUK } from "@/lib/types";
+import { Produk, Resep, BahanBaku } from "@/lib/types";
 import { X, Plus, Trash2, ImagePlus } from "lucide-react";
 
 interface ResepItem {
@@ -14,6 +14,7 @@ interface Props {
   initial: Produk | null;
   resepInitial: Resep[];
   bahanBaku: BahanBaku[];
+  kategoriOptions: string[];
   onUploadGambar?: (file: File) => Promise<string | null>;
   onClose: () => void;
   onSave: (
@@ -22,7 +23,7 @@ interface Props {
   ) => Promise<void>;
 }
 
-export default function ProdukForm({ initial, resepInitial, bahanBaku, onUploadGambar, onClose, onSave }: Props) {
+export default function ProdukForm({ initial, resepInitial, bahanBaku, kategoriOptions, onUploadGambar, onClose, onSave }: Props) {
   const [nama, setNama] = useState(initial?.nama || "");
   const [kategori, setKategori] = useState(initial?.kategori || "Lainnya");
   const [harga, setHarga] = useState(initial?.harga?.toString() || "");
@@ -79,10 +80,9 @@ export default function ProdukForm({ initial, resepInitial, bahanBaku, onUploadG
   };
 
   return (
-    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4">
       <div
         className="th-card border th-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto shadow-xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-5 border-b border-border">
           <h2 className="text-lg font-bold th-text">
@@ -139,7 +139,7 @@ export default function ProdukForm({ initial, resepInitial, bahanBaku, onUploadG
                 onChange={(e) => setKategori(e.target.value)}
                 className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent"
               >
-                {KATEGORI_PRODUK.map((k) => (
+                {kategoriOptions.map((k) => (
                   <option key={k} value={k}>
                     {k}
                   </option>

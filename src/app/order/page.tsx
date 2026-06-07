@@ -1,0 +1,183 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { formatRupiah } from "@/lib/utils";
+import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle } from "lucide-react";
+
+interface MenuItem {
+  id: string;
+  nama: string;
+  harga: number;
+  kategori: string;
+}
+
+interface CartItem extends MenuItem {
+  qty: number;
+}
+
+export default function OrderPage() {
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [nama, setNama] = useState("");
+  const [phone, setPhone] = useState("");
+  const [alamat, setAlamat] = useState("");
+  const [catatan, setCatatan] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [filterKategori, setFilterKategori] = useState("Semua");
+
+  useEffect(() => {
+    supabase.from("produk").select("id, nama, harga, kategori").eq("aktif", true).order("kategori").order("nama").then(({ data }) => {
+      if (data) setMenu(data);
+    });
+  }, []);
+
+  const kategoriList = ["Semua", ...Array.from(new Set(menu.map((m) => m.kategori)))];
+  const filtered = filterKategori === "Semua" ? menu : menu.filter((m) => m.kategori === filterKategori);
+
+  const addToCart = (item: MenuItem) => {
+    const existing = cart.find((c) => c.id === item.id);
+    if (existing) {
+      setCart(cart.map((c) => c.id === item.id ? { ...c, qty: c.qty + 1 } : c));
+    } else {
+      setCart([...cart, { ...item, qty: 1 }]);
+    }
+  };
+
+  const updateQty = (id: string, qty: number) => {
+    if (qty <= 0) {
+      setCart(cart.filter((c) => c.id !== id));
+    } else {
+      setCart(cart.map((c) => c.id === id ? { ...c, qty } : c));
+    }
+  };
+
+  const total = cart.reduce((s, c) => s + c.harga * c.qty, 0);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nama.trim() || !phone.trim() || cart.length === 0) {
+      setError("Nama, nomor WA, dan pesanan wajib diisi");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const items = cart.map((c) => ({ nama: c.nama, qty: c.qty, harga: c.harga, subtotal: c.harga * c.qty }));
+      const { error: err } = await supabase.from("orders").insert({
+        nama: nama.trim(), phone: phone.trim(), alamat: alamat.trim() || null,
+        items, catatan: catatan.trim() || null, total, status: "pending",
+      });
+      if (err) throw err;
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message || "Gagal mengirim pesanan");
+    }
+    setLoading(false);
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen th-bg flex items-center justify-center p-4">
+        <div className="th-card border th-border rounded-2xl w-full max-w-sm p-8 text-center shadow-xl">
+          <div className="w-16 h-16 bg-green-50 dark:bg-green-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle size={32} className="text-success" />
+          </div>
+          <h1 className="text-xl font-bold th-text mb-2">Pesanan Terkirim!</h1>
+          <p className="text-sm th-text-secondary mb-4">Pesanan Anda sudah diterima. Kasir akan menghubungi Anda via WhatsApp untuk konfirmasi.</p>
+          <p className="text-lg font-bold th-accent mb-6">Total: {formatRupiah(total)}</p>
+          <button onClick={() => { setSubmitted(false); setCart([]); setNama(""); setPhone(""); setAlamat(""); setCatatan(""); }} className="w-full py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
+            Pesan Lagi
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen th-bg">
+      <div className="max-w-lg mx-auto p-4 space-y-4">
+        <div className="text-center py-4">
+          <h1 className="text-2xl font-bold th-text">Pesan Online</h1>
+          <p className="text-sm th-text-secondary">Delivery / Take Away</p>
+        </div>
+
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {kategoriList.map((k) => (
+            <button key={k} onClick={() => setFilterKategori(k)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${filterKategori === k ? "th-accent-bg text-white" : "th-card border th-border th-muted"}`}>
+              {k}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          {filtered.map((item) => {
+            const inCart = cart.find((c) => c.id === item.id);
+            return (
+              <div key={item.id} className="th-card border th-border rounded-xl p-3 flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium th-text truncate">{item.nama}</p>
+                  <p className="text-xs th-accent font-bold">{formatRupiah(item.harga)}</p>
+                </div>
+                {inCart ? (
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => updateQty(item.id, inCart.qty - 1)} className="w-8 h-8 rounded-lg border th-border flex items-center justify-center th-muted touch-target"><Minus size={14} /></button>
+                    <span className="text-sm font-bold th-text w-6 text-center">{inCart.qty}</span>
+                    <button onClick={() => updateQty(item.id, inCart.qty + 1)} className="w-8 h-8 rounded-lg border th-border flex items-center justify-center th-muted touch-target"><Plus size={14} /></button>
+                  </div>
+                ) : (
+                  <button onClick={() => addToCart(item)} className="px-3 py-1.5 th-accent-bg text-white rounded-lg text-xs font-semibold touch-target"><Plus size={14} className="inline" /></button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {cart.length > 0 && (
+          <div className="th-card border th-border rounded-2xl p-4 space-y-3">
+            <h3 className="text-sm font-bold th-text">Pesanan Anda</h3>
+            {cart.map((c) => (
+              <div key={c.id} className="flex items-center justify-between text-sm">
+                <span className="th-text">{c.nama} × {c.qty}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold th-accent">{formatRupiah(c.harga * c.qty)}</span>
+                  <button onClick={() => updateQty(c.id, 0)} className="th-muted hover:text-danger"><Trash2 size={14} /></button>
+                </div>
+              </div>
+            ))}
+            <div className="border-t th-border pt-2 flex justify-between">
+              <span className="font-bold th-text">Total</span>
+              <span className="font-bold th-accent text-lg">{formatRupiah(total)}</span>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="th-card border th-border rounded-2xl p-4 space-y-3">
+          <h3 className="text-sm font-bold th-text">Data Pengiriman</h3>
+          <div>
+            <label className="text-xs font-semibold th-muted uppercase mb-1 block">Nama *</label>
+            <input type="text" value={nama} onChange={(e) => setNama(e.target.value)} required className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="Nama Anda" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold th-muted uppercase mb-1 block">No. WhatsApp *</label>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="08xxxxxxxxxx" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold th-muted uppercase mb-1 block">Alamat</label>
+            <textarea value={alamat} onChange={(e) => setAlamat(e.target.value)} rows={2} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent resize-none" placeholder="Alamat pengiriman (opsional)" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold th-muted uppercase mb-1 block">Catatan</label>
+            <input type="text" value={catatan} onChange={(e) => setCatatan(e.target.value)} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="Contoh: Pedas level 2, tanpa es" />
+          </div>
+          {error && <p className="text-sm text-danger">{error}</p>}
+          <button type="submit" disabled={loading || cart.length === 0} className="w-full py-3.5 th-accent-bg text-white rounded-xl font-bold text-base hover:opacity-90 disabled:opacity-50 touch-target flex items-center justify-center gap-2">
+            <Send size={18} /> {loading ? "Mengirim..." : `Kirim Pesanan (${formatRupiah(total)})`}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

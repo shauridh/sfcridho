@@ -7,47 +7,33 @@ import { supabase } from "@/lib/supabase";
 import { BahanBaku, getStokStatus } from "@/lib/types";
 import Sidebar from "@/components/Sidebar";
 import AlertBanner from "@/components/AlertBanner";
+import PINModal from "@/components/PINModal";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const isLoginPage = pathname === "/login";
+  const { pinVerified, verifyPin, isProtectedRoute } = useAuth();
+  const [showPin, setShowPin] = useState(false);
 
   const [bahanBaku, setBahanBaku] = useState<BahanBaku[]>([]);
 
   useEffect(() => {
-    if (authLoading || isLoginPage || !user) return;
     let active = true;
     supabase.from("bahan_baku").select("*").order("nama").then(({ data }) => {
       if (active && data) setBahanBaku(data);
     });
     return () => { active = false; };
-  }, [user?.id, isLoginPage, authLoading]);
+  }, []);
 
   useEffect(() => {
-    if (!authLoading && !user && !isLoginPage) {
-      router.replace("/login");
+    if (isProtectedRoute(pathname) && !pinVerified) {
+      setShowPin(true);
+    } else {
+      setShowPin(false);
     }
-  }, [user, authLoading, isLoginPage, router]);
+  }, [pathname, pinVerified, isProtectedRoute]);
 
   const alertCount = bahanBaku.filter((b) => getStokStatus(b.stok, b.reorder_point) !== "aman").length;
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center th-bg">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <div className="flex h-dvh overflow-hidden">
@@ -56,6 +42,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <AlertBanner bahanBaku={bahanBaku} />
         <div className="flex-1 overflow-auto">{children}</div>
       </main>
+      {showPin && (
+        <PINModal
+          title={pathname.startsWith("/pengaturan") ? "PIN Pengaturan" : "PIN Kas"}
+          onClose={() => { setShowPin(false); router.push("/dashboard"); }}
+          onVerify={verifyPin}
+        />
+      )}
     </div>
   );
 }

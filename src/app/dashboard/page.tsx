@@ -3,34 +3,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTransaksi } from "@/hooks/useTransaksi";
 import { useKas } from "@/hooks/useKas";
-import { useAuth } from "@/components/AuthProvider";
 import SummaryCards from "@/components/laporan/SummaryCards";
-import TargetProgress from "@/components/laporan/TargetProgress";
 import HourlyChart from "@/components/laporan/HourlyChart";
 import TransactionList from "@/components/laporan/TransactionList";
 import BestSellers from "@/components/laporan/BestSellers";
 import WeeklyTrend from "@/components/laporan/WeeklyTrend";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
-import { getSettings } from "@/lib/whatsapp";
 import { ChevronLeft, ChevronRight, Calendar, ArrowUpCircle, ArrowDownCircle, Banknote, QrCode, Wallet } from "lucide-react";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
   const { getLaporanHariIni, getWeeklyTrend } = useTransaksi();
   const { totalMasuk, totalKeluar, selisih, refresh: refreshKas } = useKas();
   const [date, setDate] = useState(new Date());
   const [data, setData] = useState<any>(null);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [targetHarian, setTargetHarian] = useState(1500000);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const result = await getLaporanHariIni(date);
     setData(result);
     await refreshKas(date);
-    const settings = await getSettings();
-    if (settings.daily_target) setTargetHarian(parseInt(settings.daily_target) || 1500000);
     setLoading(false);
   }, [date, getLaporanHariIni, refreshKas]);
 
@@ -50,10 +43,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold th-text">Halo, {user?.nama || "Admin"}!</h1>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/30 th-accent border th-border">
-              {user?.role || "owner"}
-            </span>
+            <h1 className="text-2xl font-bold th-text">Dashboard</h1>
           </div>
           <p className="text-sm th-text-secondary">
             {date.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
@@ -118,10 +108,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TargetProgress current={data.totalOmzet} target={targetHarian} onTargetChange={setTargetHarian} />
-        <HourlyChart data={data.hourlyData} />
-      </div>
+      <HourlyChart data={data.hourlyData} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BestSellers items={data.bestSellersList || []} />

@@ -77,11 +77,11 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
   };
 
   return (
-    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
       <div className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b th-border">
           <h2 className="text-lg font-bold th-text">Pembayaran</h2>
-          <button onClick={onClose} className="p-2 th-muted hover:th-text rounded-lg"><X size={20} /></button>
+          <button  className="p-2 th-muted hover:th-text rounded-lg"><X size={20} /></button>
         </div>
 
         {!metode ? (
@@ -152,5 +152,6 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
     </div>
   );
 }
+
 
 
