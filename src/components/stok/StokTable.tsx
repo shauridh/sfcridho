@@ -37,7 +37,7 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
           <thead>
             <tr className="border-b th-border text-left bg-red-50/50 dark:bg-red-950/20">
               {["Nama", "Kategori", "Stok", "Avg/Hari", "Cukup", "7 Hari", "Status"].map((h) => (
-                <th key={h} className="px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider">{h}</th>
+                <th key={h} className="px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider whitespace-nowrap">{h}</th>
               ))}
               <th className="px-3 py-3 text-xs font-semibold th-muted uppercase tracking-wider text-right">Aksi</th>
             </tr>
@@ -60,9 +60,9 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
                       <span className="block text-[10px] font-medium text-orange-500">{b.stok_goreng} {b.sat_dasar} goreng</span>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-sm th-text-secondary">
+                  <td className="px-3 py-3 text-sm th-text-secondary whitespace-nowrap">
                     {f && f.avgDaily > 0 ? (
-                      <span>{f.avgDaily.toFixed(1)} {b.sat_dasar}</span>
+                      <span>{(f.avgDaily / (b.isi_per_pak || 1)).toFixed(1)} {b.sat_beli}/hari</span>
                     ) : (
                       <span className="th-muted">-</span>
                     )}
@@ -79,7 +79,7 @@ export default function StokTable({ bahanBaku, forecast, onEdit, onRestock, onOp
                   <td className="px-3 py-3 text-sm">
                     {f && f.avgDaily > 0 ? (
                       f.reorderQty > 0 ? (
-                        <span className="text-danger font-semibold">+{f.reorderQty} {b.sat_dasar}</span>
+                        <span className="text-danger font-semibold">+{Math.ceil(f.reorderQty / (b.isi_per_pak || 1))} {b.sat_beli}</span>
                       ) : (
                         <span className="text-success">Aman</span>
                       )

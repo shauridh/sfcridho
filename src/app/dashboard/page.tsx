@@ -39,13 +39,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 overflow-auto h-full">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold th-text">Dashboard</h1>
-          </div>
-          <p className="text-sm th-text-secondary">
+          <h1 className="text-xl md:text-2xl font-bold th-text">Dashboard</h1>
+          <p className="text-xs md:text-sm th-text-secondary">
             {date.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
@@ -61,12 +59,12 @@ export default function DashboardPage() {
 
       <SummaryCards totalOmzet={data.totalOmzet} jumlahTransaksi={data.jumlahTransaksi} rataRata={data.rataRata} totalItem={data.totalItem} />
 
-      <div className="th-card border th-border rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="th-card border th-border rounded-2xl p-4 md:p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-3 md:mb-4">
           <Wallet size={16} className="th-accent" />
           <h3 className="text-sm font-bold th-text">Ringkasan Keuangan</h3>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3">
           <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-3 border border-green-200 dark:border-green-800">
             <div className="flex items-center gap-1.5 mb-1">
               <ArrowUpCircle size={14} className="text-green-600" />

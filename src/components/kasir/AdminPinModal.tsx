@@ -35,7 +35,7 @@ export default function AdminPinModal({ title, message, onConfirm, onClose }: Pr
       <div className="th-card border th-border rounded-2xl w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b th-border">
           <h2 className="text-lg font-bold th-text">{title}</h2>
-          <button  className="p-2 th-muted hover:th-text"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 th-muted hover:th-text"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <p className="text-sm th-text-secondary">{message}</p>
@@ -62,4 +62,5 @@ export default function AdminPinModal({ title, message, onConfirm, onClose }: Pr
     </div>
   );
 }
+
 

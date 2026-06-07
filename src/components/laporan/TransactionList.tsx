@@ -87,7 +87,7 @@ export default function TransactionList({ transaksiList }: Props) {
                 <Receipt size={18} className="th-accent" />
                 <h2 className="text-lg font-bold th-text">Detail Transaksi</h2>
               </div>
-              <button  className="p-2 th-muted hover:th-text"><X size={20} /></button>
+              <button onClick={() => setSelected(null)} className="p-2 th-muted hover:th-text"><X size={20} /></button>
             </div>
 
             <div className="p-5 space-y-4">
@@ -143,4 +143,5 @@ export default function TransactionList({ transaksiList }: Props) {
     </>
   );
 }
+
 

@@ -405,7 +405,7 @@ export default function PengaturanPage() {
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
-                <button  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+                <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
                 <button onClick={handleSaveUser} disabled={saving} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </div>
@@ -438,7 +438,7 @@ export default function PengaturanPage() {
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
-                <button  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+                <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
                 <button onClick={handleSaveAkun} disabled={saving} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </div>
@@ -448,6 +448,7 @@ export default function PengaturanPage() {
     </div>
   );
 }
+
 
 
 

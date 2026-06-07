@@ -68,7 +68,7 @@ export default function BulkInputModal({ title, columns, templateFile, onClose, 
       <div className="th-card border th-border rounded-t-2xl sm:rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b th-border shrink-0">
           <h2 className="text-lg font-bold th-text">{title}</h2>
-          <button  className="p-2 th-muted hover:th-text"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 th-muted hover:th-text"><X size={20} /></button>
         </div>
 
         <div className="flex-1 overflow-auto p-4 space-y-4">
@@ -149,7 +149,7 @@ export default function BulkInputModal({ title, columns, templateFile, onClose, 
             </p>
           )}
           <div className="flex gap-3">
-            <button  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Tutup</button>
+            <button onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Tutup</button>
             <button onClick={handleSave} disabled={saving || rows.length === 0} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
               {saving ? "Menyimpan..." : `Simpan ${rows.length} Item`}
             </button>
@@ -159,4 +159,6 @@ export default function BulkInputModal({ title, columns, templateFile, onClose, 
     </div>
   );
 }
+
+
 

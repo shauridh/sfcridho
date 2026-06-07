@@ -33,7 +33,7 @@ export default function OpnameModal({ bahan, onClose, onOpname }: Props) {
             <ClipboardCheck size={18} className="th-accent" />
             <h2 className="text-lg font-bold th-text">Stok Opname</h2>
           </div>
-          <button  className="p-2 th-muted hover:th-text"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 th-muted hover:th-text"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
@@ -74,4 +74,5 @@ export default function OpnameModal({ bahan, onClose, onOpname }: Props) {
     </div>
   );
 }
+
 

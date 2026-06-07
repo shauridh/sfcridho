@@ -432,7 +432,7 @@ export default function KasPage() {
                 <div><label className="block text-xs font-semibold th-muted uppercase mb-1.5">Tgl Jatuh Tempo</label><input type="number" min="1" max="31" value={opexForm.jatuh_tempo} onChange={(e) => setOpexForm({ ...opexForm, jatuh_tempo: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="1-31" /></div>
               </div>
               <div className="flex gap-3 pt-2">
-                <button  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+                <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
                 <button onClick={handleSaveOpex} disabled={saving} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </div>
@@ -472,7 +472,7 @@ export default function KasPage() {
               <div><label className="block text-xs font-semibold th-muted uppercase mb-1.5">Keterangan</label><input type="text" value={piutangForm.keterangan} onChange={(e) => setPiutangForm({ ...piutangForm, keterangan: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="Opsional" /></div>
               <div><label className="block text-xs font-semibold th-muted uppercase mb-1.5">Jatuh Tempo</label><input type="date" value={piutangForm.jatuh_tempo} onChange={(e) => setPiutangForm({ ...piutangForm, jatuh_tempo: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" /></div>
               <div className="flex gap-3 pt-2">
-                <button  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+                <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
                 <button onClick={handleSavePiutang} disabled={saving} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">{saving ? "Menyimpan..." : "Simpan"}</button>
               </div>
             </div>
@@ -482,4 +482,5 @@ export default function KasPage() {
     </div>
   );
 }
+
 

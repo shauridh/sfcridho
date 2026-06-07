@@ -99,7 +99,7 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
             <Unlock size={20} className="th-accent" />
             <h2 className="text-lg font-bold th-text">Tutup Kasir</h2>
           </div>
-          <button  className="p-2 th-muted hover:th-text"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 th-muted hover:th-text"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -146,4 +146,5 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
     </div>
   );
 }
+
 

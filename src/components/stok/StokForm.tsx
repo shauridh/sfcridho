@@ -112,7 +112,7 @@ export default function StokForm({ initial, kategoriOptions, onClose, onSave }: 
               <input type="number" value={stokAwalBeli} onChange={(e) => { setStokAwalBeli(e.target.value); markDirty(); }} min="0" step="any" className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="0" />
             </div>
             <div>
-              <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Reorder Pt ({satDasar || "sat dasar"})</label>
+              <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Reorder Pt ({satBeli || "sat beli"})</label>
               <input type="number" value={reorderPoint} onChange={(e) => { setReorderPoint(e.target.value); markDirty(); }} required min="0" step="any" className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="0" />
             </div>
           </div>

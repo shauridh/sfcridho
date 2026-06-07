@@ -35,7 +35,7 @@ export default function RestockModal({ bahan, onClose, onRestock }: Props) {
       >
         <div className="flex items-center justify-between p-5 border-b border-border">
           <h2 className="text-lg font-bold th-text">Restock: {bahan.nama}</h2>
-          <button  className="p-2 th-muted hover:th-text rounded-lg">
+          <button onClick={onClose} className="p-2 th-muted hover:th-text rounded-lg">
             <X size={20} />
           </button>
         </div>
@@ -112,4 +112,5 @@ export default function RestockModal({ bahan, onClose, onRestock }: Props) {
     </div>
   );
 }
+
 

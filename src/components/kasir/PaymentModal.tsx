@@ -81,7 +81,7 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
       <div className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b th-border">
           <h2 className="text-lg font-bold th-text">Pembayaran</h2>
-          <button  className="p-2 th-muted hover:th-text rounded-lg"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 th-muted hover:th-text rounded-lg"><X size={20} /></button>
         </div>
 
         {!metode ? (
