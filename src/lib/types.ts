@@ -10,6 +10,7 @@ export interface BahanBaku {
   reorder_point: number;
   harga_beli: number;
   avg_daily: number;
+  resep_goreng: { bahan_id: string; qty_per_kantong: number }[];
   created_at: string;
 }
 

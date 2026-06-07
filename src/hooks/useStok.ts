@@ -112,6 +112,16 @@ export function useStok() {
     const potongHasil = jumlahKantong * bahan.isi_per_pak;
     if (bahan.stok < potongHasil) return { error: new Error("Stok mentah tidak cukup") };
 
+    const resep = bahan.resep_goreng || [];
+    for (const item of resep) {
+      const bahanTerkait = bahanBaku.find((b) => b.id === item.bahan_id);
+      if (!bahanTerkait) continue;
+      const dibutuhkan = jumlahKantong * item.qty_per_kantong;
+      if (bahanTerkait.stok < dibutuhkan) {
+        return { error: new Error(`Stok ${bahanTerkait.nama} tidak cukup (butuh ${dibutuhkan.toFixed(2)} ${bahanTerkait.sat_dasar}, tersedia ${bahanTerkait.stok})`) };
+      }
+    }
+
     const stokMentahBaru = bahan.stok - potongHasil;
     const stokGorengBaru = (bahan.stok_goreng || 0) + potongHasil;
 
@@ -128,6 +138,20 @@ export function useStok() {
       qty: potongHasil,
       referensi: `Goreng ${jumlahKantong} kantong (${potongHasil} ${bahan.sat_dasar})`,
     });
+
+    for (const item of resep) {
+      const bahanTerkait = bahanBaku.find((b) => b.id === item.bahan_id);
+      if (!bahanTerkait) continue;
+      const dibutuhkan = jumlahKantong * item.qty_per_kantong;
+      const stokBaru = bahanTerkait.stok - dibutuhkan;
+      await supabase.from("bahan_baku").update({ stok: stokBaru }).eq("id", item.bahan_id);
+      await supabase.from("stok_log").insert({
+        bahan_id: item.bahan_id,
+        tipe: "goreng",
+        qty: -dibutuhkan,
+        referensi: `Pakai ${dibutuhkan.toFixed(2)} ${bahanTerkait.sat_dasar} untuk goreng ${jumlahKantong} kantong ${bahan.nama}`,
+      });
+    }
 
     await fetchBahanBaku();
     return { error: null };

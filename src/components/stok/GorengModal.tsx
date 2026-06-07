@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import { BahanBaku } from "@/lib/types";
-import { formatRupiah } from "@/lib/utils";
 import { X, Flame } from "lucide-react";
 
 interface Props {
   bahan: BahanBaku;
+  allBahan: BahanBaku[];
   onClose: () => void;
   onGoreng: (jumlahKantong: number) => Promise<any>;
 }
 
-export default function GorengModal({ bahan, onClose, onGoreng }: Props) {
+export default function GorengModal({ bahan, allBahan, onClose, onGoreng }: Props) {
   const [jumlah, setJumlah] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -19,9 +19,17 @@ export default function GorengModal({ bahan, onClose, onGoreng }: Props) {
   const potongHasil = kantong * bahan.isi_per_pak;
   const stokMentahCukup = bahan.stok >= potongHasil;
 
+  const resep = (bahan.resep_goreng || []).map((item) => {
+    const target = allBahan.find((b) => b.id === item.bahan_id);
+    const dibutuhkan = kantong * item.qty_per_kantong;
+    return { ...item, nama: target?.nama || "?", sat_dasar: target?.sat_dasar || "", stok: target?.stok || 0, dibutuhkan };
+  });
+
+  const semuaStokCukup = stokMentahCukup && resep.every((r) => r.stok >= r.dibutuhkan);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (kantong <= 0 || !stokMentahCukup) return;
+    if (kantong <= 0 || !semuaStokCukup) return;
     setSaving(true);
     await onGoreng(kantong);
     setSaving(false);
@@ -61,19 +69,38 @@ export default function GorengModal({ bahan, onClose, onGoreng }: Props) {
           </div>
 
           {kantong > 0 && (
-            <div className={`rounded-xl p-3 border ${stokMentahCukup ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800" : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"}`}>
+            <div className={`rounded-xl p-3 border space-y-1.5 ${semuaStokCukup ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800" : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"}`}>
               <div className="flex justify-between text-sm">
-                <span className="th-text-secondary">Mentah dipakai</span>
-                <span className="font-semibold th-text">-{potongHasil} {bahan.sat_dasar}</span>
+                <span className="th-text-secondary">🍗 {bahan.nama} mentah</span>
+                <span className="font-semibold th-text">−{potongHasil} {bahan.sat_dasar}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="th-text-secondary">Goreng dihasilkan</span>
+                <span className="th-text-secondary">🍗 {bahan.nama} goreng</span>
                 <span className="font-semibold text-orange-500">+{potongHasil} {bahan.sat_dasar}</span>
               </div>
-              {!stokMentahCukup && (
-                <p className="text-xs text-danger mt-1">Stok mentah tidak cukup!</p>
+
+              {resep.length > 0 && (
+                <div className="border-t th-border/50 pt-1.5 space-y-1">
+                  <p className="text-[10px] font-semibold th-muted uppercase">Bahan terpakai</p>
+                  {resep.map((r) => (
+                    <div key={r.bahan_id} className="flex justify-between text-sm">
+                      <span className="th-text-secondary">📦 {r.nama}</span>
+                      <span className={r.stok >= r.dibutuhkan ? "font-semibold th-text" : "font-semibold text-danger"}>
+                        −{r.dibutuhkan.toFixed(2)} {r.sat_dasar}
+                        {r.stok < r.dibutuhkan && " ⚠️"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
-              {stokMentahCukup && (
+
+              {!stokMentahCukup && (
+                <p className="text-xs text-danger mt-1">Stok {bahan.nama} mentah tidak cukup!</p>
+              )}
+              {resep.some((r) => r.stok < r.dibutuhkan) && (
+                <p className="text-xs text-danger mt-1">Stok bahan terkait tidak cukup!</p>
+              )}
+              {semuaStokCukup && (
                 <div className="flex justify-between text-sm mt-1 pt-1 border-t th-border/50">
                   <span className="th-text-secondary">Sisa mentah</span>
                   <span className="font-semibold th-text">{bahan.stok - potongHasil} {bahan.sat_dasar}</span>
@@ -84,7 +111,7 @@ export default function GorengModal({ bahan, onClose, onGoreng }: Props) {
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
-            <button type="submit" disabled={saving || kantong <= 0 || !stokMentahCukup} className="flex-1 py-3 bg-orange-500 text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">
+            <button type="submit" disabled={saving || kantong <= 0 || !semuaStokCukup} className="flex-1 py-3 bg-orange-500 text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">
               {saving ? "Memproses..." : "Goreng"}
             </button>
           </div>

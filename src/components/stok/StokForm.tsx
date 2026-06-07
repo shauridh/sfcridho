@@ -2,11 +2,17 @@
 
 import { useState, useMemo } from "react";
 import { BahanBaku, SATUAN_OPTIONS, SATUAN_LABELS } from "@/lib/types";
-import { X, ArrowRight } from "lucide-react";
+import { X, ArrowRight, Plus, Trash2 } from "lucide-react";
+
+interface ResepItem {
+  bahan_id: string;
+  qty_per_kantong: number;
+}
 
 interface Props {
   initial: BahanBaku | null;
   kategoriOptions: string[];
+  allBahan: BahanBaku[];
   onClose: () => void;
   onSave: (data: Omit<BahanBaku, "id" | "created_at">) => Promise<void>;
 }
@@ -24,7 +30,7 @@ function renderSatuanSelect(value: string, onChange: (v: string) => void, requir
   );
 }
 
-export default function StokForm({ initial, kategoriOptions, onClose, onSave }: Props) {
+export default function StokForm({ initial, kategoriOptions, allBahan, onClose, onSave }: Props) {
   const [nama, setNama] = useState(initial?.nama || "");
   const [kategori, setKategori] = useState(initial?.kategori || kategoriOptions[0] || "Lainnya");
   const [satBeli, setSatBeli] = useState(initial?.sat_beli || "");
@@ -34,6 +40,7 @@ export default function StokForm({ initial, kategoriOptions, onClose, onSave }: 
   const [reorderPoint, setReorderPoint] = useState(initial?.reorder_point?.toString() || "");
   const [hargaBeli, setHargaBeli] = useState(initial?.harga_beli?.toString() || "");
   const [avgDaily, setAvgDaily] = useState(initial?.avg_daily?.toString() || "0");
+  const [resepGoreng, setResepGoreng] = useState<ResepItem[]>(initial?.resep_goreng || []);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
@@ -60,6 +67,7 @@ export default function StokForm({ initial, kategoriOptions, onClose, onSave }: 
       isi_per_pak: parseFloat(isiPerPak) || 0, sat_dasar: satDasar,
       stok: stokDasar, stok_goreng: initial?.stok_goreng || 0, reorder_point: parseFloat(reorderPoint) || 0,
       harga_beli: parseInt(hargaBeli) || 0, avg_daily: parseFloat(avgDaily) || 0,
+      resep_goreng: resepGoreng,
     });
     setSaving(false);
   };
@@ -135,6 +143,47 @@ export default function StokForm({ initial, kategoriOptions, onClose, onSave }: 
               <span className="font-semibold th-text">{parseFloat(stokAwalBeli)} {satBeli || "?"}</span>
               <ArrowRight size={12} className="th-muted" />
               <span className="font-bold text-success">{stokDasar.toLocaleString("id-ID")} {satDasar || "?"}</span>
+            </div>
+          )}
+
+          {initial && (
+            <div className="border-t th-border pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold th-muted uppercase">Resep Goreng</p>
+                  <p className="text-[10px] th-muted">Bahan lain yang terpakai saat goreng batch</p>
+                </div>
+                <button type="button" onClick={() => { setResepGoreng([...resepGoreng, { bahan_id: "", qty_per_kantong: 0 }]); markDirty(); }} className="flex items-center gap-1 px-2.5 py-1.5 th-accent-bg text-white rounded-lg text-xs font-semibold touch-target">
+                  <Plus size={12} /> Tambah
+                </button>
+              </div>
+
+              {resepGoreng.map((item, idx) => {
+                const selectedBahan = allBahan.find((b) => b.id === item.bahan_id);
+                const availableBahan = allBahan.filter((b) => b.id !== initial.id && !resepGoreng.some((r, i) => i !== idx && r.bahan_id === b.id));
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <select value={item.bahan_id} onChange={(e) => { const n = [...resepGoreng]; n[idx] = { ...n[idx], bahan_id: e.target.value }; setResepGoreng(n); markDirty(); }} className="flex-1 px-3 py-2 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent">
+                      <option value="">Pilih bahan...</option>
+                      {availableBahan.map((b) => <option key={b.id} value={b.id}>{b.nama} ({b.sat_dasar})</option>)}
+                    </select>
+                    <input type="number" value={item.qty_per_kantong || ""} onChange={(e) => { const n = [...resepGoreng]; n[idx] = { ...n[idx], qty_per_kantong: parseFloat(e.target.value) || 0 }; setResepGoreng(n); markDirty(); }} min="0" step="any" className="w-24 px-3 py-2 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
+                    <span className="text-xs th-muted w-12 truncate">{selectedBahan?.sat_dasar || ""}</span>
+                    <button type="button" onClick={() => { setResepGoreng(resepGoreng.filter((_, i) => i !== idx)); markDirty(); }} className="p-1.5 th-muted hover:text-danger"><Trash2 size={14} /></button>
+                  </div>
+                );
+              })}
+
+              {resepGoreng.length > 0 && satBeli && (
+                <div className="px-3 py-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-xl text-xs space-y-0.5">
+                  <p className="font-semibold text-orange-700 dark:text-orange-400">Konversi:</p>
+                  <p className="th-text-secondary">1 {satBeli} {nama || "?"} → {resepGoreng.filter((r) => r.bahan_id && r.qty_per_kantong > 0).map((r) => { const b = allBahan.find((x) => x.id === r.bahan_id); return `${r.qty_per_kantong} ${b?.sat_dasar || ""} ${b?.nama || "?"}`; }).join(" + ") || "—"}</p>
+                </div>
+              )}
+
+              {resepGoreng.length === 0 && (
+                <p className="text-xs th-muted text-center py-2">Belum ada resep goreng. Tambahkan bahan yang terkonsumsi saat goreng batch.</p>
+              )}
             </div>
           )}
 

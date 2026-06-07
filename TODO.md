@@ -69,6 +69,7 @@
 013_orders.sql           ← Tabel orders (SUDAH FIX quote issue)
 014_admin_pin.sql        ← PIN default 271222 (SUDAH FIX quote issue)
 015_stok_goreng.sql      ← Kolom stok_goreng untuk batch goreng
+016_resep_goreng.sql     ← Kolom resep_goreng untuk auto-deduct tepung/minyak
 ```
 
 ---

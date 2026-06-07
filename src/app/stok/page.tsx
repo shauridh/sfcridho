@@ -89,10 +89,10 @@ export default function StokPage() {
 
       <StokTable bahanBaku={bahanBaku} forecast={forecast} onEdit={(b) => { setEditing(b); setShowForm(true); }} onRestock={(b) => setRestocking(b)} onOpname={(b) => setOpnaming(b)} onGoreng={(b) => setGorenging(b)} onDelete={hapusBahan} />
 
-      {showForm && <StokForm initial={editing} kategoriOptions={kategoriOptions.length > 0 ? kategoriOptions : ["Lainnya"]} onClose={() => { setShowForm(false); setEditing(null); }} onSave={async (data) => { if (editing) await editBahan(editing.id, data); else await tambahBahan(data); setShowForm(false); setEditing(null); }} />}
+      {showForm && <StokForm initial={editing} kategoriOptions={kategoriOptions.length > 0 ? kategoriOptions : ["Lainnya"]} allBahan={bahanBaku} onClose={() => { setShowForm(false); setEditing(null); }} onSave={async (data) => { if (editing) await editBahan(editing.id, data); else await tambahBahan(data); setShowForm(false); setEditing(null); }} />}
       {restocking && <RestockModal bahan={restocking} onClose={() => setRestocking(null)} onRestock={async (jumlah) => { await restock(restocking.id, jumlah); setRestocking(null); }} />}
       {opnaming && <OpnameModal bahan={opnaming} onClose={() => setOpnaming(null)} onOpname={async (jumlahAktual) => { await opname(opnaming.id, jumlahAktual); setOpnaming(null); }} />}
-      {gorenging && <GorengModal bahan={gorenging} onClose={() => setGorenging(null)} onGoreng={async (jumlahKantong) => { await goreng(gorenging.id, jumlahKantong); setGorenging(null); }} />}
+      {gorenging && <GorengModal bahan={gorenging} allBahan={bahanBaku} onClose={() => setGorenging(null)} onGoreng={async (jumlahKantong) => { await goreng(gorenging.id, jumlahKantong); setGorenging(null); }} />}
       {showBulk && <BulkInputModal title="Bulk Input Bahan Baku" columns={STOK_COLUMNS} templateFile="/templates/template-stok.csv" onClose={() => setShowBulk(false)} onSave={handleBulkStok} />}
     </div>
   );
