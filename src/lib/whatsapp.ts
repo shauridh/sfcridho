@@ -8,9 +8,8 @@ export interface WATemplate {
 }
 
 export const WA_TEMPLATE_TYPES = [
-  { key: "new_order", label: "Pesanan Baru (ke Admin)", placeholders: "{store_name}, {nama}, {phone}, {items}, {total}, {location}" },
-  { key: "confirm", label: "Konfirmasi Pesanan (ke Customer)", placeholders: "{store_name}, {nama}, {items}, {total}, {available_items}, {unavailable_items}" },
-  { key: "qris", label: "Kirim QRIS (ke Customer)", placeholders: "{store_name}, {total}" },
+  { key: "new_order", label: "Pesanan Baru (ke Admin)", placeholders: "{store_name}, {nama}, {phone}, {items}, {subtotal}, {ongkir}, {total}, {location}" },
+  { key: "confirm", label: "Konfirmasi + QRIS (ke Customer)", placeholders: "{store_name}, {nama}, {items}, {total}, {ongkir}, {available_items}, {unavailable_items}" },
   { key: "reject", label: "Tolak Pesanan (ke Customer)", placeholders: "{store_name}, {catatan}" },
   { key: "done", label: "Pesanan Selesai (ke Customer)", placeholders: "{store_name}" },
   { key: "cancel", label: "Batalkan Pesanan (ke Customer)", placeholders: "{store_name}" },
@@ -19,15 +18,11 @@ export const WA_TEMPLATE_TYPES = [
 export const DEFAULT_TEMPLATES: Record<string, WATemplate> = {
   new_order: {
     enabled: true,
-    template: `*{store_name}*\nPesanan online baru!\n\nDari: {nama}\nNo: {phone}\n{items}\nTotal: Rp {total}{location}\n\nBuka kasir untuk konfirmasi.`,
+    template: `*{store_name}*\nPesanan online baru!\n\nDari: {nama}\nNo: {phone}\n{items}\nSubtotal: Rp {subtotal}\nOngkir: Rp {ongkir}\nTotal: Rp {total}{location}\n\nBuka kasir untuk konfirmasi.`,
   },
   confirm: {
     enabled: true,
-    template: `*{store_name}*\nPesanan Anda dikonfirmasi!\n\n{available_items}{unavailable_items}\nTotal: Rp {total}\n\nSilakan scan QRIS yang dikirim berikutnya untuk pembayaran.\nSetelah bayar, kirim bukti bayar via chat ini.`,
-  },
-  qris: {
-    enabled: true,
-    template: `*{store_name}*\nQRIS Pembayaran — Rp {total}`,
+    template: `*{store_name}*\nPesanan Anda dikonfirmasi!\n\n{available_items}{unavailable_items}\nTotal: Rp {total}\n\nSilakan scan QRIS di atas untuk pembayaran.\nSetelah bayar, kirim bukti bayar via chat ini.`,
   },
   reject: {
     enabled: true,

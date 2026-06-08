@@ -31,10 +31,14 @@ export default function OrderPage() {
   const [error, setError] = useState("");
   const [filterKategori, setFilterKategori] = useState("Semua");
   const [collapsedKategori, setCollapsedKategori] = useState<Set<string>>(new Set());
+  const [ongkir, setOngkir] = useState(0);
 
   useEffect(() => {
     supabase.from("produk").select("id, nama, harga, kategori").eq("aktif", true).order("kategori").order("nama").then(({ data }) => {
       if (data) setMenu(data);
+    });
+    getSettings().then((s) => {
+      setOngkir(parseInt(s.ongkir) || 0);
     });
   }, []);
 
@@ -58,7 +62,8 @@ export default function OrderPage() {
     }
   };
 
-  const total = cart.reduce((s, c) => s + c.harga * c.qty, 0);
+  const subtotal = cart.reduce((s, c) => s + c.harga * c.qty, 0);
+  const total = subtotal + ongkir;
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -92,7 +97,7 @@ export default function OrderPage() {
       const items = cart.map((c) => ({ nama: c.nama, qty: c.qty, harga: c.harga, subtotal: c.harga * c.qty }));
       const { error: err } = await supabase.from("orders").insert({
         nama: nama.trim(), phone: phone.trim(), alamat: alamat.trim() || null,
-        items, catatan: catatan.trim() || null, total, status: "pending",
+        items, catatan: catatan.trim() || null, subtotal, ongkir, total, status: "pending",
         location_url: locationUrl || null,
       });
       if (err) throw err;
@@ -109,6 +114,8 @@ export default function OrderPage() {
           nama: nama.trim(),
           phone: phone.trim(),
           items: itemsList,
+          subtotal: subtotal.toLocaleString("id-ID"),
+          ongkir: ongkir > 0 ? formatRupiah(ongkir) : "-",
           total: total.toLocaleString("id-ID"),
           location: locationLine,
         });
@@ -131,7 +138,15 @@ export default function OrderPage() {
           </div>
           <h1 className="text-xl font-bold th-text mb-2">Pesanan Terkirim!</h1>
           <p className="text-sm th-text-secondary mb-4">Pesanan Anda sudah diterima. Kasir akan menghubungi Anda via WhatsApp untuk konfirmasi.</p>
-          <p className="text-lg font-bold th-accent mb-6">Total: {formatRupiah(total)}</p>
+          {ongkir > 0 ? (
+            <div className="space-y-1 mb-4">
+              <p className="text-sm th-text">Subtotal: {formatRupiah(subtotal)}</p>
+              <p className="text-sm th-text">Ongkir: {formatRupiah(ongkir)}</p>
+              <p className="text-lg font-bold th-accent">Total: {formatRupiah(total)}</p>
+            </div>
+          ) : (
+            <p className="text-lg font-bold th-accent mb-6">Total: {formatRupiah(total)}</p>
+          )}
             <button onClick={() => { setSubmitted(false); setCart([]); setNama(""); setPhone(""); setAlamat(""); setCatatan(""); setLocationUrl(""); }} className="w-full py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
             Pesan Lagi
           </button>
@@ -224,9 +239,21 @@ export default function OrderPage() {
                 </div>
               </div>
             ))}
-            <div className="border-t th-border pt-2 flex justify-between">
-              <span className="font-bold th-text">Total</span>
-              <span className="font-bold th-accent text-lg">{formatRupiah(total)}</span>
+            <div className="border-t th-border pt-2 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="th-text-secondary">Subtotal</span>
+                <span className="font-medium th-text">{formatRupiah(subtotal)}</span>
+              </div>
+              {ongkir > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="th-text-secondary">Ongkir</span>
+                  <span className="font-medium th-text">{formatRupiah(ongkir)}</span>
+                </div>
+              )}
+              <div className="flex justify-between pt-1 border-t th-border/50">
+                <span className="font-bold th-text">Total</span>
+                <span className="font-bold th-accent text-lg">{formatRupiah(total)}</span>
+              </div>
             </div>
           </div>
         )}

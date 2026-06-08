@@ -84,12 +84,14 @@ export default function OnlineOrders() {
 
     const availableText = availableItems.map((i) => `✅ ${i.nama} x${i.qty} — ${formatRupiah(i.subtotal)}`).join("\n");
     const unavailableText = unavailableItems.length > 0 ? "\n" + unavailableItems.map((i) => `❌ ${i.nama} — habis`).join("\n") : "";
+    const ongkirVal = order.ongkir || 0;
 
     if (templates.confirm?.enabled) {
       const msg = fillTemplate(templates.confirm.template, {
         store_name: storeName,
         nama: order.nama,
         items: order.items.map((i) => `${i.nama} x${i.qty}`).join(", "),
+        ongkir: ongkirVal > 0 ? formatRupiah(ongkirVal) : "-",
         total: adjustedTotal.toLocaleString("id-ID"),
         available_items: availableText,
         unavailable_items: unavailableText,
@@ -101,10 +103,7 @@ export default function OnlineOrders() {
     try {
       const QRCodeLib = await import("qrcode");
       const qrDataUrl = await QRCodeLib.default.toDataURL(dynamicQris, { width: 400, margin: 2, color: { dark: "#000000", light: "#FFFFFF" } });
-      const qrCaption = templates.qris?.enabled
-        ? fillTemplate(templates.qris.template, { store_name: storeName, total: adjustedTotal.toLocaleString("id-ID") })
-        : `QRIS Pembayaran ${storeName} — Rp ${adjustedTotal.toLocaleString("id-ID")}`;
-      const imgResult = await sendWhatsAppImage(qrDataUrl, order.phone, qrCaption);
+      const imgResult = await sendWhatsAppImage(qrDataUrl, order.phone, `QRIS Pembayaran ${storeName} — Rp ${adjustedTotal.toLocaleString("id-ID")}`);
       qrSent = imgResult.success;
       if (!imgResult.success) {
         console.error("QR image send failed:", imgResult.error);

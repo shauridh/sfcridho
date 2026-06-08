@@ -187,7 +187,12 @@ export default function PengaturanPage() {
             <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Nama Toko</label>
             <input type="text" value={settings.store_name || ""} onChange={(e) => setSettings({ ...settings, store_name: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" />
           </div>
-          <button onClick={() => handleSaveSettings({ store_name: settings.store_name })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
+          <div>
+            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Ongkir (Rp)</label>
+            <input type="number" value={settings.ongkir || ""} onChange={(e) => setSettings({ ...settings, ongkir: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="0" min="0" />
+            <p className="text-[10px] th-muted mt-0.5">Ongkos kirim fixed untuk pesanan online. Isi 0 jika tidak ada ongkir.</p>
+          </div>
+          <button onClick={() => handleSaveSettings({ store_name: settings.store_name, ongkir: settings.ongkir || "0" })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
             {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan"}
           </button>
 
