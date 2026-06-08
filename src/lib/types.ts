@@ -21,6 +21,25 @@ export interface ForecastItem extends BahanBaku {
   reorderQty: number;
 }
 
+export interface WeeklyForecastItem {
+  id: string;
+  nama: string;
+  kategori: string;
+  sat_beli: string;
+  sat_dasar: string;
+  isi_per_pak: number;
+  harga_beli: number;
+  stokBeli: number;
+  avgDailyBeli: number;
+  daysRemaining: number;
+  orderByDate: Date;
+  reorderQtyBeli: number;
+  estHarga: number;
+  isUrgent: boolean;
+  recommendedReorderPoint: number;
+  recommendedReorderPointBeli: number;
+}
+
 export interface Kategori {
   id: string;
   nama: string;

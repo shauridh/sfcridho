@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { BahanBaku, ForecastItem } from "@/lib/types";
+import { BahanBaku, ForecastItem, WeeklyForecastItem } from "@/lib/types";
 
 export function useStok() {
   const [bahanBaku, setBahanBaku] = useState<BahanBaku[]>([]);
@@ -202,6 +202,46 @@ export function useStok() {
     return { error: null };
   };
 
+  const getWeeklyForecast = useCallback((safetyDays: number = 3): WeeklyForecastItem[] => {
+    return bahanBaku
+      .filter((b) => (b.avg_daily || 0) > 0)
+      .map((b) => {
+        const avgDaily = b.avg_daily || 0;
+        const daysRemaining = Math.floor(b.stok / avgDaily);
+        const stokBeli = Math.floor(b.stok / (b.isi_per_pak || 1));
+        const avgDailyBeli = avgDaily / (b.isi_per_pak || 1);
+        const orderByDate = new Date();
+        orderByDate.setDate(orderByDate.getDate() + Math.max(0, daysRemaining - safetyDays));
+        const stokNeeded = Math.ceil(avgDaily * (7 + safetyDays));
+        const reorderQty = Math.max(0, stokNeeded - b.stok);
+        const reorderQtyBeli = Math.ceil(reorderQty / (b.isi_per_pak || 1));
+        const estHarga = reorderQtyBeli * (b.harga_beli || 0);
+        const recommendedReorderPoint = Math.ceil(avgDaily * safetyDays);
+        const recommendedReorderPointBeli = Math.ceil(recommendedReorderPoint / (b.isi_per_pak || 1));
+        return {
+          id: b.id, nama: b.nama, kategori: b.kategori,
+          sat_beli: b.sat_beli, sat_dasar: b.sat_dasar, isi_per_pak: b.isi_per_pak || 1,
+          harga_beli: b.harga_beli || 0,
+          stokBeli, avgDailyBeli, daysRemaining, orderByDate,
+          reorderQtyBeli, estHarga,
+          isUrgent: daysRemaining <= safetyDays,
+          recommendedReorderPoint, recommendedReorderPointBeli,
+        };
+      })
+      .sort((a, b) => a.daysRemaining - b.daysRemaining);
+  }, [bahanBaku]);
+
+  const applyReorderPoints = useCallback(async (safetyDays: number = 3) => {
+    const updates = bahanBaku
+      .filter((b) => (b.avg_daily || 0) > 0)
+      .map((b) => {
+        const recommended = Math.ceil((b.avg_daily || 0) * safetyDays);
+        return supabase.from("bahan_baku").update({ reorder_point: recommended }).eq("id", b.id);
+      });
+    await Promise.all(updates);
+    await fetchBahanBaku();
+  }, [bahanBaku, fetchBahanBaku]);
+
   return {
     bahanBaku,
     forecast: getForecast(),
@@ -214,6 +254,8 @@ export function useStok() {
     opname,
     goreng,
     gorengHarian,
+    getWeeklyForecast,
+    applyReorderPoints,
     refresh: fetchBahanBaku,
   };
 }

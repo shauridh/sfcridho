@@ -7,6 +7,7 @@ import { X, ArrowRight } from "lucide-react";
 interface Props {
   initial: BahanBaku | null;
   kategoriOptions: string[];
+  safetyDays: number;
   onClose: () => void;
   onSave: (data: Omit<BahanBaku, "id" | "created_at">) => Promise<void>;
 }
@@ -24,7 +25,7 @@ function renderSatuanSelect(value: string, onChange: (v: string) => void, requir
   );
 }
 
-export default function StokForm({ initial, kategoriOptions, onClose, onSave }: Props) {
+export default function StokForm({ initial, kategoriOptions, safetyDays, onClose, onSave }: Props) {
   const [nama, setNama] = useState(initial?.nama || "");
   const [kategori, setKategori] = useState(initial?.kategori || kategoriOptions[0] || "Lainnya");
   const [satBeli, setSatBeli] = useState(initial?.sat_beli || "");
@@ -115,6 +116,14 @@ export default function StokForm({ initial, kategoriOptions, onClose, onSave }: 
             <div>
               <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Reorder Pt ({satBeli || "sat beli"})</label>
               <input type="number" value={reorderPoint} onChange={(e) => { setReorderPoint(e.target.value); markDirty(); }} required min="0" step="any" className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="0" />
+              {parseFloat(avgDaily) > 0 && (
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="text-[10px] th-muted">
+                    💡 Rekomendasi: {Math.ceil(parseFloat(avgDaily) * safetyDays / (parseFloat(isiPerPak) || 1))} {satBeli || "?"} ({Math.ceil(parseFloat(avgDaily) * safetyDays)} {satDasar || "?"}, {safetyDays} hari)
+                  </p>
+                  <button type="button" onClick={() => { setReorderPoint(Math.ceil(parseFloat(avgDaily) * safetyDays / (parseFloat(isiPerPak) || 1)).toString()); markDirty(); }} className="text-[10px] th-accent font-semibold hover:underline">Gunakan</button>
+                </div>
+              )}
             </div>
           </div>
 
