@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
-import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle, MapPin } from "lucide-react";
 import { sendWhatsApp, getSettings } from "@/lib/whatsapp";
 
 interface MenuItem {
@@ -24,6 +24,8 @@ export default function OrderPage() {
   const [phone, setPhone] = useState("");
   const [alamat, setAlamat] = useState("");
   const [catatan, setCatatan] = useState("");
+  const [locationUrl, setLocationUrl] = useState("");
+  const [locating, setLocating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -57,6 +59,26 @@ export default function OrderPage() {
 
   const total = cart.reduce((s, c) => s + c.harga * c.qty, 0);
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Browser tidak mendukung GPS");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const url = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+        setLocationUrl(url);
+        setLocating(false);
+      },
+      (err) => {
+        alert("Gagal mengambil lokasi: " + err.message);
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nama.trim() || !phone.trim() || cart.length === 0) {
@@ -70,17 +92,19 @@ export default function OrderPage() {
       const { error: err } = await supabase.from("orders").insert({
         nama: nama.trim(), phone: phone.trim(), alamat: alamat.trim() || null,
         items, catatan: catatan.trim() || null, total, status: "pending",
+        location_url: locationUrl || null,
       });
       if (err) throw err;
 
       const settings = await getSettings();
       const storeName = settings.store_name || "Sabana FC";
       const itemsList = cart.map((c) => `${c.nama} x${c.qty}`).join(", ");
+      const locationLine = locationUrl ? `\n📍 Lokasi: ${locationUrl}` : "";
 
       const customerMsg = `*${storeName}*\nTerima kasih telah memesan!\n\nPesanan Anda:\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}\n\nAdmin akan mengecek ketersediaan dan menghubungi Anda via WhatsApp.`;
       await sendWhatsApp(customerMsg, phone.trim());
 
-      const ownerMsg = `*${storeName}*\nPesanan online baru!\n\nDari: ${nama.trim()}\nNo: ${phone.trim()}\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}\n\nBuka kasir untuk konfirmasi.`;
+      const ownerMsg = `*${storeName}*\nPesanan online baru!\n\nDari: ${nama.trim()}\nNo: ${phone.trim()}\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}${locationLine}\n\nBuka kasir untuk konfirmasi.`;
       await sendWhatsApp(ownerMsg);
 
       setSubmitted(true);
@@ -100,7 +124,7 @@ export default function OrderPage() {
           <h1 className="text-xl font-bold th-text mb-2">Pesanan Terkirim!</h1>
           <p className="text-sm th-text-secondary mb-4">Pesanan Anda sudah diterima. Kasir akan menghubungi Anda via WhatsApp untuk konfirmasi.</p>
           <p className="text-lg font-bold th-accent mb-6">Total: {formatRupiah(total)}</p>
-          <button onClick={() => { setSubmitted(false); setCart([]); setNama(""); setPhone(""); setAlamat(""); setCatatan(""); }} className="w-full py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
+            <button onClick={() => { setSubmitted(false); setCart([]); setNama(""); setPhone(""); setAlamat(""); setCatatan(""); setLocationUrl(""); }} className="w-full py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
             Pesan Lagi
           </button>
         </div>
@@ -179,6 +203,13 @@ export default function OrderPage() {
           <div>
             <label className="text-xs font-semibold th-muted uppercase mb-1 block">Alamat</label>
             <textarea value={alamat} onChange={(e) => setAlamat(e.target.value)} rows={2} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent resize-none" placeholder="Alamat pengiriman (opsional)" />
+            <button type="button" onClick={handleGetLocation} disabled={locating} className="mt-2 flex items-center gap-2 px-3 py-2 w-full th-card border th-border rounded-xl text-sm th-text hover:border-accent transition-colors touch-target">
+              <MapPin size={16} className={locationUrl ? "text-success" : "th-muted"} />
+              {locating ? "Mengambil lokasi..." : locationUrl ? "✓ Lokasi tersimpan" : "📍 Ambil Lokasi Saya"}
+            </button>
+            {locationUrl && (
+              <a href={locationUrl} target="_blank" rel="noopener noreferrer" className="block mt-1 text-xs text-blue-500 underline">Buka di Google Maps</a>
+            )}
           </div>
           <div>
             <label className="text-xs font-semibold th-muted uppercase mb-1 block">Catatan</label>

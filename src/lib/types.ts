@@ -40,6 +40,7 @@ export interface Order {
   status: "pending" | "confirmed" | "paid" | "done" | "cancelled" | "unavailable";
   qris_string: string | null;
   confirm_token: string;
+  location_url: string | null;
   created_at: string;
   updated_at: string;
 }

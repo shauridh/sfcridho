@@ -71,6 +71,7 @@
 015_stok_goreng.sql      ← Kolom stok_goreng untuk batch goreng
 016_resep_goreng.sql     ← Kolom resep_goreng untuk auto-deduct tepung/minyak
 017_order_unavailable.sql ← Status 'unavailable' untuk tolak pesanan
+018_order_location.sql    ← Kolom location_url untuk GPS tagging
 ```
 
 ---

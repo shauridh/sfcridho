@@ -137,6 +137,11 @@ export default function OnlineOrders() {
           </div>
 
           {order.alamat && <p className="text-xs th-muted">📍 {order.alamat}</p>}
+          {order.location_url && (
+            <a href={order.location_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 flex items-center gap-1 hover:underline">
+              📍 Buka di Maps
+            </a>
+          )}
 
           <div className="space-y-0.5">
             {order.items.map((item, i) => (
