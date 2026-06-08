@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { getSettings, updateSetting, sendWhatsApp } from "@/lib/whatsapp";
+import { getSettings, updateSetting, sendWhatsApp, getWATemplates, saveWATemplates, fillTemplate, WA_TEMPLATE_TYPES, DEFAULT_TEMPLATES, WATemplate } from "@/lib/whatsapp";
 
 import { supabase } from "@/lib/supabase";
 import { AppUser, Akun, TIPE_AKUN_OPTIONS } from "@/lib/types";
-import { Store, Users, MessageCircle, Save, Plus, Trash2, Edit3, Wallet, QrCode, Shield } from "lucide-react";
+import { Store, Users, MessageCircle, Save, Plus, Trash2, Edit3, Wallet, QrCode, Shield, FileText } from "lucide-react";
 
 export default function PengaturanPage() {
   const { currentUser } = useAuth();
-  const [tab, setTab] = useState<"store" | "users" | "wa" | "akun" | "qris" | "pin">("store");
+  const [tab, setTab] = useState<"store" | "users" | "wa" | "akun" | "qris" | "pin" | "templates">("store");
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [waTemplates, setWaTemplates] = useState<Record<string, WATemplate>>({});
+  const [templatesLoaded, setTemplatesLoaded] = useState(false);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [akunList, setAkunList] = useState<Akun[]>([]);
   const [showAkunForm, setShowAkunForm] = useState(false);
@@ -37,6 +39,9 @@ export default function PengaturanPage() {
     if (data) setUsers(data);
     const { data: akunData } = await supabase.from("akun").select("*").order("created_at");
     if (akunData) setAkunList(akunData);
+    const t = await getWATemplates();
+    setWaTemplates(t);
+    setTemplatesLoaded(true);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -152,6 +157,7 @@ export default function PengaturanPage() {
     { key: "users", label: "User", icon: Users },
     { key: "akun", label: "Akun", icon: Wallet },
     { key: "wa", label: "WhatsApp", icon: MessageCircle },
+    { key: "templates", label: "Template", icon: FileText },
     { key: "qris", label: "QRIS", icon: QrCode },
     { key: "pin", label: "PIN", icon: Shield },
   ] as const;
@@ -346,6 +352,57 @@ export default function PengaturanPage() {
           }} disabled={saving || newPin.length < 4} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
             {saving ? "Menyimpan..." : pinSaved ? "PIN Tersimpan!" : "Simpan PIN"}
           </button>
+        </div>
+      )}
+
+      {tab === "templates" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold th-text">Template Pesan WhatsApp</h3>
+              <p className="text-xs th-text-secondary mt-0.5">Sesuaikan pesan yang dikirim ke customer & admin. Gunakan {'{'}variabel{'}'} untuk data dinamis.</p>
+            </div>
+            <button onClick={async () => {
+              setSaving(true);
+              await saveWATemplates(waTemplates);
+              setSaving(false);
+              setSaved(true);
+              setTimeout(() => setSaved(false), 2000);
+            }} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm touch-target">
+              <Save size={16} /> {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan Semua"}
+            </button>
+          </div>
+
+          {templatesLoaded && WA_TEMPLATE_TYPES.map((tplType) => {
+            const tpl = waTemplates[tplType.key] || DEFAULT_TEMPLATES[tplType.key];
+            return (
+              <div key={tplType.key} className="th-card border th-border rounded-2xl p-4 md:p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold th-text">{tplType.label}</p>
+                    <p className="text-[10px] th-muted">Variabel: {tplType.placeholders}</p>
+                  </div>
+                  <button onClick={() => setWaTemplates((prev) => ({
+                    ...prev,
+                    [tplType.key]: { ...prev[tplType.key], enabled: !prev[tplType.key]?.enabled, template: prev[tplType.key]?.template || DEFAULT_TEMPLATES[tplType.key].template },
+                  }))} className={`w-12 h-6 rounded-full transition-colors ${tpl.enabled ? "bg-success" : "th-surface border th-border"}`}>
+                    <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${tpl.enabled ? "translate-x-6" : "translate-x-0.5"}`} />
+                  </button>
+                </div>
+                {tpl.enabled && (
+                  <textarea
+                    value={tpl.template}
+                    onChange={(e) => setWaTemplates((prev) => ({
+                      ...prev,
+                      [tplType.key]: { enabled: true, template: e.target.value },
+                    }))}
+                    rows={4}
+                    className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-xs font-mono th-text focus:outline-none focus:border-accent resize-none"
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

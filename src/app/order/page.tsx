@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
 import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle, MapPin, ChevronDown, ChevronRight } from "lucide-react";
-import { sendWhatsApp, getSettings } from "@/lib/whatsapp";
+import { sendWhatsApp, getSettings, getWATemplates, fillTemplate } from "@/lib/whatsapp";
 
 interface MenuItem {
   id: string;
@@ -98,12 +98,22 @@ export default function OrderPage() {
       if (err) throw err;
 
       const settings = await getSettings();
+      const templates = await getWATemplates();
       const storeName = settings.store_name || "Sabana FC";
       const itemsList = cart.map((c) => `${c.nama} x${c.qty}`).join(", ");
       const locationLine = locationUrl ? `\n📍 Lokasi: ${locationUrl}` : "";
 
-      const ownerMsg = `*${storeName}*\nPesanan online baru!\n\nDari: ${nama.trim()}\nNo: ${phone.trim()}\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}${locationLine}\n\nBuka kasir untuk konfirmasi.`;
-      await sendWhatsApp(ownerMsg);
+      if (templates.new_order?.enabled) {
+        const ownerMsg = fillTemplate(templates.new_order.template, {
+          store_name: storeName,
+          nama: nama.trim(),
+          phone: phone.trim(),
+          items: itemsList,
+          total: total.toLocaleString("id-ID"),
+          location: locationLine,
+        });
+        await sendWhatsApp(ownerMsg);
+      }
 
       setSubmitted(true);
     } catch (err: any) {

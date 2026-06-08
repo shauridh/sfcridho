@@ -2,6 +2,69 @@
 
 import { supabase } from "@/lib/supabase";
 
+export interface WATemplate {
+  enabled: boolean;
+  template: string;
+}
+
+export const WA_TEMPLATE_TYPES = [
+  { key: "new_order", label: "Pesanan Baru (ke Admin)", placeholders: "{store_name}, {nama}, {phone}, {items}, {total}, {location}" },
+  { key: "confirm", label: "Konfirmasi Pesanan (ke Customer)", placeholders: "{store_name}, {nama}, {items}, {total}, {available_items}, {unavailable_items}" },
+  { key: "qris", label: "Kirim QRIS (ke Customer)", placeholders: "{store_name}, {total}" },
+  { key: "reject", label: "Tolak Pesanan (ke Customer)", placeholders: "{store_name}, {catatan}" },
+  { key: "done", label: "Pesanan Selesai (ke Customer)", placeholders: "{store_name}" },
+  { key: "cancel", label: "Batalkan Pesanan (ke Customer)", placeholders: "{store_name}" },
+] as const;
+
+export const DEFAULT_TEMPLATES: Record<string, WATemplate> = {
+  new_order: {
+    enabled: true,
+    template: `*{store_name}*\nPesanan online baru!\n\nDari: {nama}\nNo: {phone}\n{items}\nTotal: Rp {total}{location}\n\nBuka kasir untuk konfirmasi.`,
+  },
+  confirm: {
+    enabled: true,
+    template: `*{store_name}*\nPesanan Anda dikonfirmasi!\n\n{available_items}{unavailable_items}\nTotal: Rp {total}\n\nSilakan scan QRIS yang dikirim berikutnya untuk pembayaran.\nSetelah bayar, kirim bukti bayar via chat ini.`,
+  },
+  qris: {
+    enabled: true,
+    template: `*{store_name}*\nQRIS Pembayaran — Rp {total}`,
+  },
+  reject: {
+    enabled: true,
+    template: `*{store_name}*\nMaaf, pesanan Anda tidak tersedia saat ini.{catatan}\n\nSilakan pesan kembali lain waktu.`,
+  },
+  done: {
+    enabled: true,
+    template: `*{store_name}*\nPesanan Anda telah selesai! Terima kasih 🙏`,
+  },
+  cancel: {
+    enabled: true,
+    template: `*{store_name}*\nPesanan Anda telah dibatalkan.`,
+  },
+};
+
+export async function getWATemplates(): Promise<Record<string, WATemplate>> {
+  const { data } = await supabase.from("settings").select("value").eq("key", "wa_templates").single();
+  if (data?.value) {
+    try {
+      return { ...DEFAULT_TEMPLATES, ...JSON.parse(data.value) };
+    } catch {}
+  }
+  return { ...DEFAULT_TEMPLATES };
+}
+
+export async function saveWATemplates(templates: Record<string, WATemplate>) {
+  return supabase.from("settings").upsert({ key: "wa_templates", value: JSON.stringify(templates) }, { onConflict: "key" });
+}
+
+export function fillTemplate(template: string, vars: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+  }
+  return result;
+}
+
 export async function getSettings(): Promise<Record<string, string>> {
   const { data } = await supabase.from("settings").select("key, value");
   if (!data) return {};

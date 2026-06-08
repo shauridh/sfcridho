@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
-import { sendWhatsApp, sendWhatsAppImage, getSettings } from "@/lib/whatsapp";
+import { sendWhatsApp, sendWhatsAppImage, getSettings, getWATemplates, fillTemplate } from "@/lib/whatsapp";
 import { convertQRIS } from "@/lib/qris";
 import { Order } from "@/lib/types";
 import { RefreshCw, CheckCircle, XCircle, Truck, Phone, AlertTriangle } from "lucide-react";
@@ -57,6 +57,7 @@ export default function OnlineOrders() {
 
   const handleConfirmAndPay = async (order: Order) => {
     const settings = await getSettings();
+    const templates = await getWATemplates();
     const staticQris = settings.qris_string;
     const storeName = settings.store_name || "Sabana FC";
 
@@ -81,42 +82,59 @@ export default function OnlineOrders() {
     const dynamicQris = convertQRIS(staticQris, { amount: adjustedTotal });
     await supabase.from("orders").update({ qris_string: dynamicQris }).eq("id", order.id);
 
-    const confirmUrl = `${window.location.origin}/api/orders/confirm/${order.confirm_token}`;
+    const availableText = availableItems.map((i) => `✅ ${i.nama} x${i.qty} — ${formatRupiah(i.subtotal)}`).join("\n");
+    const unavailableText = unavailableItems.length > 0 ? "\n" + unavailableItems.map((i) => `❌ ${i.nama} — habis`).join("\n") : "";
 
-    let itemsText = availableItems.map((i) => `✅ ${i.nama} x${i.qty} — ${formatRupiah(i.subtotal)}`).join("\n");
-    if (unavailableItems.length > 0) {
-      itemsText += "\n" + unavailableItems.map((i) => `❌ ${i.nama} — habis`).join("\n");
+    if (templates.confirm?.enabled) {
+      const msg = fillTemplate(templates.confirm.template, {
+        store_name: storeName,
+        nama: order.nama,
+        items: order.items.map((i) => `${i.nama} x${i.qty}`).join(", "),
+        total: adjustedTotal.toLocaleString("id-ID"),
+        available_items: availableText,
+        unavailable_items: unavailableText,
+      });
+      await sendWhatsApp(msg, order.phone);
     }
 
-    const msgCustomer = `*${storeName}*\nPesanan Anda dikonfirmasi!\n\n${itemsText}\n\nTotal: Rp ${adjustedTotal.toLocaleString("id-ID")}\n\nSilakan scan QRIS di atas untuk pembayaran.\nSetelah bayar, kirim bukti bayar via chat ini.`;
-    await sendWhatsApp(msgCustomer, order.phone);
-
+    let qrSent = false;
     try {
       const QRCodeLib = await import("qrcode");
       const qrDataUrl = await QRCodeLib.default.toDataURL(dynamicQris, { width: 400, margin: 2, color: { dark: "#000000", light: "#FFFFFF" } });
-      await sendWhatsAppImage(qrDataUrl, order.phone, `QRIS Pembayaran ${storeName} — Rp ${adjustedTotal.toLocaleString("id-ID")}`);
+      const qrCaption = templates.qris?.enabled
+        ? fillTemplate(templates.qris.template, { store_name: storeName, total: adjustedTotal.toLocaleString("id-ID") })
+        : `QRIS Pembayaran ${storeName} — Rp ${adjustedTotal.toLocaleString("id-ID")}`;
+      const imgResult = await sendWhatsAppImage(qrDataUrl, order.phone, qrCaption);
+      qrSent = imgResult.success;
+      if (!imgResult.success) {
+        console.error("QR image send failed:", imgResult.error);
+      }
     } catch (qrErr) {
-      console.error("Failed to send QR image:", qrErr);
+      console.error("Failed to generate/send QR image:", qrErr);
     }
 
-    const msgOwner = `*${storeName}*\nPesanan dikonfirmasi & QRIS dikirim:\n${order.nama} (${order.phone})\nTotal: Rp ${adjustedTotal.toLocaleString("id-ID")}${unavailableItems.length > 0 ? `\n${unavailableItems.length} item habis` : ""}`;
-    await sendWhatsApp(msgOwner);
+    if (!qrSent) {
+      const confirmUrl = `${window.location.origin}/api/orders/confirm/${order.confirm_token}`;
+      await sendWhatsApp(`Link pembayaran QRIS:\n${confirmUrl}`, order.phone);
+    }
 
     fetchOrders();
   };
 
   const handleReject = async () => {
     if (!rejectingOrder) return;
-    const settings = await getSettings();
-    const storeName = settings.store_name || "Sabana FC";
+    const templates = await getWATemplates();
+    const storeName = (await getSettings()).store_name || "Sabana FC";
 
     await supabase.from("orders").update({ status: "unavailable", updated_at: new Date().toISOString() }).eq("id", rejectingOrder.id);
 
-    const msgCustomer = `*${storeName}*\nMaaf, pesanan Anda tidak tersedia saat ini.${rejectNote.trim() ? `\n\nCatatan: ${rejectNote.trim()}` : ""}\n\nSilakan pesan kembali lain waktu.`;
-    await sendWhatsApp(msgCustomer, rejectingOrder.phone);
-
-    const msgOwner = `*${storeName}*\nPesanan ${rejectingOrder.nama} ditolak (tidak tersedia)${rejectNote.trim() ? `: ${rejectNote.trim()}` : ""}`;
-    await sendWhatsApp(msgOwner);
+    if (templates.reject?.enabled) {
+      const msg = fillTemplate(templates.reject.template, {
+        store_name: storeName,
+        catatan: rejectNote.trim() ? `\n\nCatatan: ${rejectNote.trim()}` : "",
+      });
+      await sendWhatsApp(msg, rejectingOrder.phone);
+    }
 
     setRejectingOrder(null);
     setRejectNote("");
@@ -124,26 +142,30 @@ export default function OnlineOrders() {
   };
 
   const handleDone = async (order: Order) => {
-    const settings = await getSettings();
-    const storeName = settings.store_name || "Sabana FC";
+    const templates = await getWATemplates();
+    const storeName = (await getSettings()).store_name || "Sabana FC";
 
     await supabase.from("orders").update({ status: "done", updated_at: new Date().toISOString() }).eq("id", order.id);
 
-    const msgCustomer = `*${storeName}*\nPesanan Anda telah selesai! Terima kasih 🙏`;
-    await sendWhatsApp(msgCustomer, order.phone);
+    if (templates.done?.enabled) {
+      const msg = fillTemplate(templates.done.template, { store_name: storeName });
+      await sendWhatsApp(msg, order.phone);
+    }
 
     fetchOrders();
   };
 
   const handleCancel = async (order: Order) => {
     if (!confirm("Yakin batalkan pesanan ini?")) return;
-    const settings = await getSettings();
-    const storeName = settings.store_name || "Sabana FC";
+    const templates = await getWATemplates();
+    const storeName = (await getSettings()).store_name || "Sabana FC";
 
     await supabase.from("orders").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", order.id);
 
-    const msgCustomer = `*${storeName}*\nPesanan Anda telah dibatalkan.`;
-    await sendWhatsApp(msgCustomer, order.phone);
+    if (templates.cancel?.enabled) {
+      const msg = fillTemplate(templates.cancel.template, { store_name: storeName });
+      await sendWhatsApp(msg, order.phone);
+    }
 
     fetchOrders();
   };

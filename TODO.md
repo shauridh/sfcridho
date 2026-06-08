@@ -104,10 +104,11 @@
 
 ### 📋 Sisa Yang Perlu Dilakukan
 
-1. **Jalankan migrations** di Supabase SQL Editor (010-015)
+1. **Jalankan migrations** di Supabase SQL Editor (010-019)
 2. **Testing delete produk** setelah migration 010
 3. **Testing mobile** di HP fisik (semua page sudah responsive)
-4. **Push & deploy**
+4. **Testing QRIS image** — cek apakah getsender.id support send-image endpoint
+5. **Push & deploy**
 
 
 
