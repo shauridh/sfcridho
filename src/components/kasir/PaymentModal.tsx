@@ -28,29 +28,29 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
 
   // Generate smart nominal suggestions based on total
   const nominalCepat = (() => {
-    const roundedTotal = Math.ceil(total / 1000) * 1000; // Round up to nearest 1000
+    // Round up to nearest 5k
+    const roundTo5k = Math.ceil(total / 5000) * 5000;
     const suggestions = new Set<number>();
     
-    // Add amounts relative to total
-    if (total < 50000) {
-      suggestions.add(roundedTotal + 5000);
-      suggestions.add(roundedTotal + 10000);
-      suggestions.add(roundedTotal + 20000);
+    // Add 2-3 increments of 5k or 10k from rounded total
+    if (roundTo5k < 50000) {
+      if (roundTo5k > total) suggestions.add(roundTo5k);
+      suggestions.add(roundTo5k + 5000);
+      suggestions.add(roundTo5k + 10000);
     } else {
-      suggestions.add(roundedTotal + 10000);
-      suggestions.add(roundedTotal + 20000);
-      suggestions.add(roundedTotal + 50000);
+      if (roundTo5k > total) suggestions.add(roundTo5k);
+      suggestions.add(roundTo5k + 10000);
     }
     
     // Always include 50k and 100k
     suggestions.add(50000);
     suggestions.add(100000);
     
-    // Convert to array, sort, and filter out values <= total
+    // Convert to array, sort, filter > total, and limit to 4-5 items
     return Array.from(suggestions)
       .filter(n => n > total)
       .sort((a, b) => a - b)
-      .slice(0, 5); // Max 5 suggestions
+      .slice(0, 4);
   })();
 
   const handleNominalCepat = (nilai: number) => { setBayar(nilai.toString()); setError(""); };
