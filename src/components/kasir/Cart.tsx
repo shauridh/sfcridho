@@ -23,7 +23,7 @@ function getCartKey(item: CartItem) {
 
 export default function Cart({ items, total, onUpdateQty, onClear, onBayar }: Props) {
   return (
-    <div className="flex flex-col h-full th-card">
+    <div className="relative flex flex-col h-full th-card">
       <div className="flex items-center justify-between px-5 py-4 border-b th-border">
         <div className="flex items-center gap-2">
           <ShoppingBag size={18} className="th-accent" />
@@ -39,7 +39,7 @@ export default function Cart({ items, total, onUpdateQty, onClear, onBayar }: Pr
         )}
       </div>
 
-      <div className="flex-1 overflow-auto px-5 py-3 space-y-2">
+      <div className="flex-1 overflow-auto px-5 py-3 pb-24 space-y-2">
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full th-muted">
             <ShoppingBag size={40} className="mb-3 opacity-30" />
@@ -71,7 +71,7 @@ export default function Cart({ items, total, onUpdateQty, onClear, onBayar }: Pr
         ))}
       </div>
 
-      <div className="border-t th-border px-5 py-4 space-y-3">
+      <div className="absolute bottom-0 left-0 right-0 border-t th-border px-5 py-4 space-y-3 th-card shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between">
           <span className="text-sm th-text-secondary">Total</span>
           <span className="text-2xl font-bold th-accent">{formatRupiah(total)}</span>
