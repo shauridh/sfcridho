@@ -74,6 +74,7 @@
 018_order_location.sql    ← Kolom location_url untuk GPS tagging
 019_order_available_items.sql ← Kolom available_items untuk kurasi kasir
 020_order_ongkir.sql          ← Kolom subtotal & ongkir di orders
+021_addons.sql                ← Tabel addons untuk varian produk
 ```
 
 ---

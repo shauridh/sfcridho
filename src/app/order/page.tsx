@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
-import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle, MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle, MapPin, ChevronDown, ChevronRight, X } from "lucide-react";
 import { sendWhatsApp, getSettings, getWATemplates, fillTemplate } from "@/lib/whatsapp";
 
 interface MenuItem {
@@ -15,6 +15,13 @@ interface MenuItem {
 
 interface CartItem extends MenuItem {
   qty: number;
+  addons?: { id: string; nama: string; harga: number }[];
+}
+
+interface AddonItem {
+  id: string;
+  nama: string;
+  harga: number;
 }
 
 export default function OrderPage() {
@@ -32,10 +39,16 @@ export default function OrderPage() {
   const [filterKategori, setFilterKategori] = useState("Semua");
   const [collapsedKategori, setCollapsedKategori] = useState<Set<string>>(new Set());
   const [ongkir, setOngkir] = useState(0);
+  const [availableAddons, setAvailableAddons] = useState<AddonItem[]>([]);
+  const [addonModal, setAddonModal] = useState<MenuItem | null>(null);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
   useEffect(() => {
     supabase.from("produk").select("id, nama, harga, kategori").eq("aktif", true).order("kategori").order("nama").then(({ data }) => {
       if (data) setMenu(data);
+    });
+    supabase.from("addons").select("id, nama, harga").eq("aktif", true).order("nama").then(({ data }) => {
+      if (data) setAvailableAddons(data);
     });
     getSettings().then((s) => {
       setOngkir(parseInt(s.ongkir) || 0);
@@ -45,24 +58,32 @@ export default function OrderPage() {
   const kategoriList = ["Semua", ...Array.from(new Set(menu.map((m) => m.kategori)))];
   const filtered = filterKategori === "Semua" ? menu : menu.filter((m) => m.kategori === filterKategori);
 
-  const addToCart = (item: MenuItem) => {
-    const existing = cart.find((c) => c.id === item.id);
+  const addToCart = (item: MenuItem, addons?: { id: string; nama: string; harga: number }[]) => {
+    const addonKey = addons ? addons.map((a) => a.id).sort().join(",") : "";
+    const existing = cart.find((c) => c.id === item.id && (c.addons ? c.addons.map((a) => a.id).sort().join(",") : "") === addonKey);
     if (existing) {
-      setCart(cart.map((c) => c.id === item.id ? { ...c, qty: c.qty + 1 } : c));
+      setCart(cart.map((c) => c === existing ? { ...c, qty: c.qty + 1 } : c));
     } else {
-      setCart([...cart, { ...item, qty: 1 }]);
+      setCart([...cart, { ...item, qty: 1, addons }]);
     }
   };
 
-  const updateQty = (id: string, qty: number) => {
+  const getItemPrice = (item: CartItem) => {
+    const addonTotal = (item.addons || []).reduce((s, a) => s + a.harga, 0);
+    return (item.harga + addonTotal) * item.qty;
+  };
+
+  const getCartKey = (c: CartItem) => `${c.id}-${(c.addons || []).map((a) => a.id).sort().join(",")}`;
+
+  const updateQty = (key: string, qty: number) => {
     if (qty <= 0) {
-      setCart(cart.filter((c) => c.id !== id));
+      setCart(cart.filter((c) => getCartKey(c) !== key));
     } else {
-      setCart(cart.map((c) => c.id === id ? { ...c, qty } : c));
+      setCart(cart.map((c) => getCartKey(c) === key ? { ...c, qty } : c));
     }
   };
 
-  const subtotal = cart.reduce((s, c) => s + c.harga * c.qty, 0);
+  const subtotal = cart.reduce((s, c) => s + getItemPrice(c), 0);
   const total = subtotal + ongkir;
 
   const handleGetLocation = () => {
@@ -94,7 +115,16 @@ export default function OrderPage() {
     setLoading(true);
     setError("");
     try {
-      const items = cart.map((c) => ({ nama: c.nama, qty: c.qty, harga: c.harga, subtotal: c.harga * c.qty }));
+      const items = cart.map((c) => {
+        const addonTotal = (c.addons || []).reduce((s, a) => s + a.harga, 0);
+        const addonNames = (c.addons || []).map((a) => a.nama).join(", ");
+        return {
+          nama: addonNames ? `${c.nama} + ${addonNames}` : c.nama,
+          qty: c.qty,
+          harga: c.harga + addonTotal,
+          subtotal: (c.harga + addonTotal) * c.qty,
+        };
+      });
       const { error: err } = await supabase.from("orders").insert({
         nama: nama.trim(), phone: phone.trim(), alamat: alamat.trim() || null,
         items, catatan: catatan.trim() || null, subtotal, ongkir, total, status: "pending",
@@ -216,7 +246,14 @@ export default function OrderPage() {
                               <button onClick={() => updateQty(item.id, inCart.qty + 1)} className="w-8 h-8 rounded-lg border th-border flex items-center justify-center th-muted touch-target"><Plus size={14} /></button>
                             </div>
                           ) : (
-                            <button onClick={() => addToCart(item)} className="px-3 py-1.5 th-accent-bg text-white rounded-lg text-xs font-semibold touch-target"><Plus size={14} className="inline" /></button>
+                            <button onClick={() => {
+                              if (availableAddons.length > 0) {
+                                setAddonModal(item);
+                                setSelectedAddons([]);
+                              } else {
+                                addToCart(item);
+                              }
+                            }} className="px-3 py-1.5 th-accent-bg text-white rounded-lg text-xs font-semibold touch-target"><Plus size={14} className="inline" /></button>
                           )}
                         </div>
                       );
@@ -232,12 +269,17 @@ export default function OrderPage() {
           <div className="th-card border th-border rounded-2xl p-4 space-y-3">
             <h3 className="text-sm font-bold th-text">Pesanan Anda</h3>
             {cart.map((c) => (
-              <div key={c.id} className="flex items-center justify-between text-sm">
-                <span className="th-text">{c.nama} × {c.qty}</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold th-accent">{formatRupiah(c.harga * c.qty)}</span>
-                  <button onClick={() => updateQty(c.id, 0)} className="th-muted hover:text-danger"><Trash2 size={14} /></button>
+              <div key={`${c.id}-${(c.addons || []).map((a) => a.id).sort().join(",")}`} className="space-y-0.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="th-text">{c.nama} × {c.qty}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold th-accent">{formatRupiah(getItemPrice(c))}</span>
+                    <button onClick={() => updateQty(`${c.id}-${(c.addons || []).map((a) => a.id).sort().join(",")}`, 0)} className="th-muted hover:text-danger"><Trash2 size={14} /></button>
+                  </div>
                 </div>
+                {(c.addons || []).length > 0 && (
+                  <p className="text-[10px] th-muted pl-2">+ {c.addons!.map((a) => a.nama).join(", ")}</p>
+                )}
               </div>
             ))}
             <div className="border-t th-border pt-2 space-y-1">
@@ -289,6 +331,47 @@ export default function OrderPage() {
             <Send size={18} /> {loading ? "Mengirim..." : `Kirim Pesanan (${formatRupiah(total)})`}
           </button>
         </form>
+
+        {addonModal && (
+          <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4">
+            <div className="th-card border th-border rounded-2xl w-full max-w-sm shadow-xl">
+              <div className="flex items-center justify-between p-5 border-b th-border">
+                <div>
+                  <h2 className="text-lg font-bold th-text">{addonModal.nama}</h2>
+                  <p className="text-xs th-accent font-bold">{formatRupiah(addonModal.harga)}</p>
+                </div>
+                <button onClick={() => { setAddonModal(null); setSelectedAddons([]); }} className="p-2 th-muted hover:th-text"><X size={20} /></button>
+              </div>
+              <div className="p-5 space-y-3">
+                <p className="text-xs font-semibold th-muted uppercase">Tambah Addon (opsional)</p>
+                <div className="space-y-2 max-h-48 overflow-auto">
+                  {availableAddons.map((a) => {
+                    const isSelected = selectedAddons.includes(a.id);
+                    return (
+                      <button key={a.id} onClick={() => {
+                        setSelectedAddons((prev) => isSelected ? prev.filter((id) => id !== a.id) : [...prev, a.id]);
+                      }} className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl border text-sm transition-colors ${isSelected ? "border-accent bg-red-50 dark:bg-red-950/20" : "th-border hover:border-accent"}`}>
+                        <span className={isSelected ? "font-semibold th-text" : "th-text-secondary"}>{a.nama}</span>
+                        <span className={isSelected ? "font-semibold th-accent" : "th-muted"}>+{formatRupiah(a.harga)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => { addToCart(addonModal); setAddonModal(null); setSelectedAddons([]); }} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Tanpa Addon</button>
+                  <button onClick={() => {
+                    const addons = availableAddons.filter((a) => selectedAddons.includes(a.id));
+                    addToCart(addonModal, addons);
+                    setAddonModal(null);
+                    setSelectedAddons([]);
+                  }} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
+                    Tambah{selectedAddons.length > 0 ? ` (+${formatRupiah(availableAddons.filter((a) => selectedAddons.includes(a.id)).reduce((s, a) => s + a.harga, 0))})` : ""}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

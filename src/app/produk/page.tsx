@@ -4,22 +4,26 @@ import { useState } from "react";
 import { useProduk } from "@/hooks/useProduk";
 import { useStok } from "@/hooks/useStok";
 import { useKategori } from "@/hooks/useKategori";
+import { useAddon } from "@/hooks/useAddon";
 import ProdukGrid from "@/components/produk/ProdukGrid";
 import ProdukForm from "@/components/produk/ProdukForm";
 import KategoriManager from "@/components/KategoriManager";
+import AddonManager from "@/components/AddonManager";
 import BulkInputModal, { Column } from "@/components/BulkInputModal";
 import { Produk } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
-import { Plus, Search, Layers, Tag } from "lucide-react";
+import { Plus, Search, Layers, Tag, Puzzle } from "lucide-react";
 
 export default function ProdukPage() {
   const { produk, resepMap, loading, tambahProduk, editProduk, toggleAktif, hapusProduk, uploadGambar, refresh } = useProduk();
   const { bahanBaku } = useStok();
   const { namaList: kategoriOptions, kategoriList, tambahKategori, editKategori, hapusKategori } = useKategori("produk");
+  const { addons, tambahAddon, editAddon, hapusAddon } = useAddon();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Produk | null>(null);
   const [showBulk, setShowBulk] = useState(false);
   const [showKategori, setShowKategori] = useState(false);
+  const [showAddon, setShowAddon] = useState(false);
   const [search, setSearch] = useState("");
   const [filterKategori, setFilterKategori] = useState("Semua");
 
@@ -63,6 +67,9 @@ export default function ProdukPage() {
           <button onClick={() => setShowKategori(!showKategori)} className="flex items-center gap-2 px-3 py-2.5 border th-border rounded-xl font-semibold text-sm th-muted hover:th-text transition-colors touch-target">
             <Tag size={16} /> Kategori
           </button>
+          <button onClick={() => setShowAddon(!showAddon)} className="flex items-center gap-2 px-3 py-2.5 border th-border rounded-xl font-semibold text-sm th-muted hover:th-text transition-colors touch-target">
+            <Puzzle size={16} /> Addon
+          </button>
           <button onClick={() => setShowBulk(true)} className="flex items-center gap-2 px-3 py-2.5 border th-border rounded-xl font-semibold text-sm th-muted hover:th-text transition-colors touch-target">
             <Layers size={16} /> Bulk
           </button>
@@ -74,6 +81,10 @@ export default function ProdukPage() {
 
       {showKategori && (
         <KategoriManager title="Kategori Produk" kategoriList={kategoriList} onAdd={tambahKategori} onEdit={editKategori} onDelete={hapusKategori} />
+      )}
+
+      {showAddon && (
+        <AddonManager addons={addons} onAdd={tambahAddon} onEdit={editAddon} onDelete={hapusAddon} />
       )}
 
       <div className="flex items-center gap-3">

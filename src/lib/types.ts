@@ -112,9 +112,18 @@ export interface StokLog {
   waktu: string;
 }
 
+export interface Addon {
+  id: string;
+  nama: string;
+  harga: number;
+  aktif: boolean;
+  created_at: string;
+}
+
 export interface CartItem {
   produk: Produk;
   qty: number;
+  addons?: { id: string; nama: string; harga: number }[];
 }
 
 export type StokStatus = "aman" | "rendah" | "kritis" | "habis";

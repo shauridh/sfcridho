@@ -13,11 +13,12 @@ import ReceiptStruk from "@/components/kasir/ReceiptStruk";
 import KategoriBar from "@/components/kasir/KategoriBar";
 import OnlineOrders from "@/components/kasir/OnlineOrders";
 import { ShiftOpenModal, ShiftCloseModal } from "@/components/kasir/ShiftModals";
-import { CartItem } from "@/lib/types";
+import { CartItem, Addon } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import { formatRupiah } from "@/lib/utils";
 import { getSettings } from "@/lib/whatsapp";
 import { sendWhatsApp, formatLaporanWA } from "@/lib/whatsapp";
-import { ShoppingBag, Globe } from "lucide-react";
+import { ShoppingBag, Globe, X } from "lucide-react";
 
 interface ReceiptData {
   items: CartItem[];
@@ -45,6 +46,9 @@ export default function KasirPage() {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showOnlineOrders, setShowOnlineOrders] = useState(false);
   const [shiftStats, setShiftStats] = useState({ totalTransaksi: 0, totalNominal: 0 });
+  const [availableAddons, setAvailableAddons] = useState<Addon[]>([]);
+  const [addonModal, setAddonModal] = useState<string | null>(null);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
   const fetchShiftStats = useCallback(async () => {
     if (!activeShift) return;
@@ -71,6 +75,9 @@ export default function KasirPage() {
       }
     };
     loadKategoriOrder();
+    supabase.from("addons").select("*").eq("aktif", true).order("nama").then(({ data }) => {
+      if (data) setAvailableAddons(data);
+    });
   }, []);
 
   const activeProduk = useMemo(() => produk.filter((p) => p.aktif), [produk]);
@@ -86,21 +93,28 @@ export default function KasirPage() {
   }, [activeProduk, kategoriOrder]);
 
   const filteredProduk = filterKategori === "Semua" ? activeProduk : activeProduk.filter((p) => p.kategori === filterKategori);
-  const total = cart.reduce((sum, item) => sum + item.produk.harga * item.qty, 0);
+  const total = cart.reduce((sum, item) => sum + getCartItemPrice(item), 0);
 
-  const addToCart = (produkId: string) => {
+  const addToCart = (produkId: string, addons?: { id: string; nama: string; harga: number }[]) => {
     const p = activeProduk.find((pr) => pr.id === produkId);
     if (!p) return;
+    const addonKey = addons ? addons.map((a) => a.id).sort().join(",") : "";
     setCart((prev) => {
-      const existing = prev.find((item) => item.produk.id === produkId);
-      if (existing) return prev.map((item) => item.produk.id === produkId ? { ...item, qty: item.qty + 1 } : item);
-      return [...prev, { produk: p, qty: 1 }];
+      const existing = prev.find((item) => item.produk.id === produkId && (item.addons ? item.addons.map((a) => a.id).sort().join(",") : "") === addonKey);
+      if (existing) return prev.map((item) => item === existing ? { ...item, qty: item.qty + 1 } : item);
+      return [...prev, { produk: p, qty: 1, addons }];
     });
   };
 
-  const updateQty = (produkId: string, qty: number) => {
-    if (qty <= 0) setCart((prev) => prev.filter((item) => item.produk.id !== produkId));
-    else setCart((prev) => prev.map((item) => item.produk.id === produkId ? { ...item, qty } : item));
+  const getCartItemPrice = (item: CartItem) => {
+    const addonTotal = (item.addons || []).reduce((s, a) => s + a.harga, 0);
+    return (item.produk.harga + addonTotal) * item.qty;
+  };
+
+  const updateQty = (produkId: string, qty: number, addons?: { id: string; nama: string; harga: number }[]) => {
+    const addonKey = addons ? addons.map((a) => a.id).sort().join(",") : "";
+    if (qty <= 0) setCart((prev) => prev.filter((item) => !(item.produk.id === produkId && (item.addons ? item.addons.map((a) => a.id).sort().join(",") : "") === addonKey)));
+    else setCart((prev) => prev.map((item) => item.produk.id === produkId && (item.addons ? item.addons.map((a) => a.id).sort().join(",") : "") === addonKey ? { ...item, qty } : item));
   };
 
   const clearCart = () => setCart([]);
@@ -214,7 +228,14 @@ export default function KasirPage() {
           </div>
         )}
 
-        <ProductGrid produk={filteredProduk} onAdd={addToCart} />
+        <ProductGrid produk={filteredProduk} onAdd={(produkId) => {
+          if (availableAddons.length > 0) {
+            setAddonModal(produkId);
+            setSelectedAddons([]);
+          } else {
+            addToCart(produkId);
+          }
+        }} />
       </div>
 
       <div className="hidden md:block w-[42%] min-w-[320px] border-l th-border">
@@ -254,6 +275,51 @@ export default function KasirPage() {
           loading={false}
         />
       )}
+
+      {addonModal && (() => {
+        const p = activeProduk.find((pr) => pr.id === addonModal);
+        if (!p) return null;
+        return (
+          <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4">
+            <div className="th-card border th-border rounded-2xl w-full max-w-sm shadow-xl">
+              <div className="flex items-center justify-between p-5 border-b th-border">
+                <div>
+                  <h2 className="text-lg font-bold th-text">{p.nama}</h2>
+                  <p className="text-xs th-accent font-bold">{formatRupiah(p.harga)}</p>
+                </div>
+                <button onClick={() => { setAddonModal(null); setSelectedAddons([]); }} className="p-2 th-muted hover:th-text"><X size={20} /></button>
+              </div>
+              <div className="p-5 space-y-3">
+                <p className="text-xs font-semibold th-muted uppercase">Tambah Addon (opsional)</p>
+                <div className="space-y-2 max-h-48 overflow-auto">
+                  {availableAddons.map((a) => {
+                    const isSelected = selectedAddons.includes(a.id);
+                    return (
+                      <button key={a.id} onClick={() => {
+                        setSelectedAddons((prev) => isSelected ? prev.filter((id) => id !== a.id) : [...prev, a.id]);
+                      }} className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl border text-sm transition-colors ${isSelected ? "border-accent bg-red-50 dark:bg-red-950/20" : "th-border hover:border-accent"}`}>
+                        <span className={isSelected ? "font-semibold th-text" : "th-text-secondary"}>{a.nama}</span>
+                        <span className={isSelected ? "font-semibold th-accent" : "th-muted"}>+{formatRupiah(a.harga)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => { addToCart(addonModal); setAddonModal(null); setSelectedAddons([]); }} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Tanpa Addon</button>
+                  <button onClick={() => {
+                    const addons = availableAddons.filter((a) => selectedAddons.includes(a.id));
+                    addToCart(addonModal, addons);
+                    setAddonModal(null);
+                    setSelectedAddons([]);
+                  }} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
+                    Tambah{selectedAddons.length > 0 ? ` (+${formatRupiah(availableAddons.filter((a) => selectedAddons.includes(a.id)).reduce((s, a) => s + a.harga, 0))})` : ""}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -23,10 +23,12 @@ export function useTransaksi() {
     try {
       const items = cart.map((item) => {
         const resepList = resepMap[item.produk.id] || [];
+        const addonNames = (item.addons || []).map((a) => a.nama).join(", ");
+        const addonTotal = (item.addons || []).reduce((s, a) => s + a.harga, 0);
         return {
           produk_id: item.produk.id,
-          nama_snapshot: item.produk.nama,
-          harga: item.produk.harga,
+          nama_snapshot: addonNames ? `${item.produk.nama} + ${addonNames}` : item.produk.nama,
+          harga: item.produk.harga + addonTotal,
           qty: item.qty,
           resep: resepList.map((r) => ({
             bahan_id: r.bahan_id,
