@@ -58,15 +58,15 @@ export default function Cart({ items, total, onUpdateQty, onClear, onBayar }: Pr
               <p className="text-xs th-text-secondary">{formatRupiah(item.produk.harga + (item.addons || []).reduce((s, a) => s + a.harga, 0))} × {item.qty}</p>
             </div>
             <div className="flex items-center gap-1.5">
-              <button onClick={() => onUpdateQty(item.produk.id, item.qty - 1, item.addons)} className="w-8 h-8 flex items-center justify-center th-card border th-border rounded-lg th-muted hover:th-text transition-colors">
-                {item.qty === 1 ? <Trash2 size={12} /> : <Minus size={14} />}
+              <button onClick={() => onUpdateQty(item.produk.id, item.qty - 1, item.addons)} className="w-11 h-11 flex items-center justify-center th-card border th-border rounded-xl th-muted hover:th-text transition-colors touch-target">
+                {item.qty === 1 ? <Trash2 size={16} /> : <Minus size={18} />}
               </button>
-              <span className="w-8 text-center text-sm font-bold th-text">{item.qty}</span>
-              <button onClick={() => onUpdateQty(item.produk.id, item.qty + 1, item.addons)} className="w-8 h-8 flex items-center justify-center th-card border th-border rounded-lg th-muted hover:th-text transition-colors">
-                <Plus size={14} />
+              <span className="w-10 text-center text-base font-bold th-text">{item.qty}</span>
+              <button onClick={() => onUpdateQty(item.produk.id, item.qty + 1, item.addons)} className="w-11 h-11 flex items-center justify-center th-card border th-border rounded-xl th-muted hover:th-text transition-colors touch-target">
+                <Plus size={18} />
               </button>
             </div>
-            <div className="text-sm font-bold th-accent w-20 text-right">{formatRupiah(getItemPrice(item))}</div>
+            <div className="text-sm font-bold th-accent w-16 text-right">{formatRupiah(getItemPrice(item))}</div>
           </div>
         ))}
       </div>

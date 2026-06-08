@@ -215,9 +215,7 @@ export default function KasirPage() {
     <div className="flex h-full relative">
       <div className="flex-1 flex flex-col overflow-hidden p-3 md:p-4">
         <div className="flex items-center gap-2 mb-3 md:mb-4">
-          <div className="flex-1 overflow-x-auto scrollbar-hide">
-            <KategoriBar kategoriList={kategoriList} active={filterKategori} onSelect={setFilterKategori} onReorder={handleReorderKategori} />
-          </div>
+          <KategoriBar kategoriList={kategoriList} active={filterKategori} onSelect={setFilterKategori} onReorder={handleReorderKategori} />
           {onlineDelivery && (
             <button
               onClick={() => setShowOnlineOrders(!showOnlineOrders)}
@@ -245,7 +243,7 @@ export default function KasirPage() {
         }} />
       </div>
 
-      <div className="hidden md:block w-[40%] min-w-[340px] border-l th-border">
+      <div className="hidden md:block w-[38%] min-w-[320px] border-l th-border">
         <Cart items={cart} total={total} onUpdateQty={updateQty} onClear={clearCart} onBayar={() => setShowPayment(true)} />
       </div>
 
@@ -262,9 +260,9 @@ export default function KasirPage() {
       )}
 
       {showMobileCart && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col">
-          <div className="flex-1 bg-black/40" onClick={() => setShowMobileCart(false)} />
-          <div className="th-card border-t th-border rounded-t-2xl max-h-[80vh] flex flex-col">
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col transition-all duration-300 ease-out" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
+          <div className="flex-1" onClick={() => setShowMobileCart(false)} />
+          <div className="th-card border-t th-border rounded-t-2xl max-h-[80vh] flex flex-col transform transition-transform duration-300 ease-out translate-y-0">
             <Cart items={cart} total={total} onUpdateQty={updateQty} onClear={() => { clearCart(); setShowMobileCart(false); }} onBayar={() => { setShowMobileCart(false); setShowPayment(true); }} />
           </div>
         </div>
@@ -304,7 +302,7 @@ export default function KasirPage() {
                     return (
                       <button key={a.id} onClick={() => {
                         setSelectedAddons((prev) => isSelected ? prev.filter((id) => id !== a.id) : [...prev, a.id]);
-                      }} className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl border text-sm transition-colors ${isSelected ? "border-accent bg-red-50 dark:bg-red-950/20" : "th-border hover:border-accent"}`}>
+                      }} className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border text-sm transition-colors touch-target ${isSelected ? "border-accent bg-red-50 dark:bg-red-950/20" : "th-border hover:border-accent"}`}>
                         <span className={isSelected ? "font-semibold th-text" : "th-text-secondary"}>{a.nama}</span>
                         <span className={isSelected ? "font-semibold th-accent" : "th-muted"}>+{formatRupiah(a.harga)}</span>
                       </button>
@@ -312,13 +310,13 @@ export default function KasirPage() {
                   })}
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button onClick={() => { addToCart(addonModal); setAddonModal(null); setSelectedAddons([]); }} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Tanpa Addon</button>
+                  <button onClick={() => { addToCart(addonModal); setAddonModal(null); setSelectedAddons([]); }} className="flex-1 py-3.5 border th-border rounded-xl text-sm font-medium th-muted touch-target">Tanpa Addon</button>
                   <button onClick={() => {
                     const addons = availableAddons.filter((a) => selectedAddons.includes(a.id));
                     addToCart(addonModal, addons);
                     setAddonModal(null);
                     setSelectedAddons([]);
-                  }} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
+                  }} className="flex-1 py-3.5 th-accent-bg text-white rounded-xl font-bold touch-target">
                     Tambah{selectedAddons.length > 0 ? ` (+${formatRupiah(availableAddons.filter((a) => selectedAddons.includes(a.id)).reduce((s, a) => s + a.harga, 0))})` : ""}
                   </button>
                 </div>

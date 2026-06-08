@@ -101,8 +101,8 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
     if (txError) setError("Gagal memproses transaksi");
   };
 
-  return (
-    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" >
+return (
+    <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="th-card border th-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b th-border">
           <h2 className="text-lg font-bold th-text">Pembayaran</h2>
@@ -152,7 +152,7 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
             </div>
             <div>
               <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">Nominal Bayar (Rp)</label>
-              <input type="text" inputMode="numeric" value={bayar} onChange={(e) => { setBayar(e.target.value); setError(""); }} autoFocus className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
+              <input type="text" inputMode="numeric" value={bayar} onChange={(e) => { setBayar(e.target.value); setError(""); }} autoFocus className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-center touch-target" placeholder="0" />
             </div>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(80px,1fr))] gap-2">
               <button type="button" onClick={handlePas} className="py-2.5 bg-red-50 dark:bg-red-950/40 border th-border rounded-xl text-xs font-semibold th-accent hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors touch-target truncate px-1">Pas</button>

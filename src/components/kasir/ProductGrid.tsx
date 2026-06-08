@@ -36,7 +36,7 @@ export default function ProductGrid({ produk, onAdd }: Props) {
             <button
               key={p.id}
               onClick={() => onAdd(p.id)}
-              className="th-card border th-border rounded-2xl overflow-hidden text-left transition-all active:scale-[0.97] hover:shadow-lg touch-target flex flex-col"
+              className="th-card border th-border rounded-2xl overflow-hidden text-left transition-all active:scale-[0.97] hover:shadow-lg touch-target flex flex-col focus:outline-none focus:ring-2 focus:ring-accent/30"
             >
               {hasImage ? (
                 <div className="relative w-full h-20 sm:h-24 bg-gray-100 dark:bg-gray-800">

@@ -44,7 +44,7 @@ export default function KategoriBar({ kategoriList, active, onSelect, onReorder 
   };
 
   return (
-    <div ref={containerRef} className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <div ref={containerRef} className="flex flex-wrap gap-1.5 pb-1 max-w-full" role="toolbar" aria-label="Filter kategori produk">
       {kategoriList.map((k, idx) => {
         const isActive = active === k;
         const isDragging = dragging === idx;
@@ -59,7 +59,7 @@ export default function KategoriBar({ kategoriList, active, onSelect, onReorder 
             onDragOver={(e) => !isReorder && handleDragOver(e, idx)}
             onDrop={() => !isReorder && handleDrop(idx)}
             onDragEnd={handleDragEnd}
-            className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all touch-target select-none shrink-0 ${
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all touch-target select-none ${
               isDragging ? "opacity-40 scale-95" : ""
             } ${isOver ? "ring-2 ring-accent ring-offset-1" : ""} ${
               isActive
@@ -68,7 +68,7 @@ export default function KategoriBar({ kategoriList, active, onSelect, onReorder 
             }`}
           >
             {!isReorder && (
-              <GripVertical size={12} className="opacity-40 cursor-grab active:cursor-grabbing shrink-0" />
+              <GripVertical size={10} className="opacity-40 cursor-grab active:cursor-grabbing shrink-0" />
             )}
             <button onClick={() => onSelect(k)} className="whitespace-nowrap">
               {k}
@@ -77,5 +77,5 @@ export default function KategoriBar({ kategoriList, active, onSelect, onReorder 
         );
       })}
     </div>
-  );
+);
 }
