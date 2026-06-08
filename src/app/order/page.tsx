@@ -11,6 +11,7 @@ interface MenuItem {
   nama: string;
   harga: number;
   kategori: string;
+  has_addons?: boolean;
 }
 
 interface CartItem extends MenuItem {
@@ -44,7 +45,7 @@ export default function OrderPage() {
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
   useEffect(() => {
-    supabase.from("produk").select("id, nama, harga, kategori").eq("aktif", true).order("kategori").order("nama").then(({ data }) => {
+    supabase.from("produk").select("id, nama, harga, kategori, has_addons").eq("aktif", true).order("kategori").order("nama").then(({ data }) => {
       if (data) setMenu(data);
     });
     supabase.from("addons").select("id, nama, harga").eq("aktif", true).order("nama").then(({ data }) => {
@@ -247,7 +248,7 @@ export default function OrderPage() {
                             </div>
                           ) : (
                             <button onClick={() => {
-                              if (availableAddons.length > 0) {
+                              if (availableAddons.length > 0 && item.has_addons) {
                                 setAddonModal(item);
                                 setSelectedAddons([]);
                               } else {

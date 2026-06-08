@@ -75,6 +75,7 @@
 019_order_available_items.sql ← Kolom available_items untuk kurasi kasir
 020_order_ongkir.sql          ← Kolom subtotal & ongkir di orders
 021_addons.sql                ← Tabel addons untuk varian produk
+022_produk_has_addons.sql     ← Kolom has_addons di produk (toggle per produk)
 ```
 
 ---

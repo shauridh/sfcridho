@@ -28,6 +28,7 @@ export default function ProdukForm({ initial, resepInitial, bahanBaku, kategoriO
   const [kategori, setKategori] = useState(initial?.kategori || "Lainnya");
   const [harga, setHarga] = useState(initial?.harga?.toString() || "");
   const [gambar, setGambar] = useState<string | null>(initial?.gambar || null);
+  const [hasAddons, setHasAddons] = useState(initial?.has_addons || false);
   const [uploading, setUploading] = useState(false);
   const [resepItems, setResepItems] = useState<ResepItem[]>(
     resepInitial.length > 0
@@ -64,7 +65,7 @@ export default function ProdukForm({ initial, resepInitial, bahanBaku, kategoriO
     setSaving(true);
     const validResep = resepItems.filter((r) => r.bahan_id && r.qty > 0);
     await onSave(
-      { nama, kategori, harga: parseInt(harga) || 0, aktif: initial?.aktif ?? true, gambar },
+      { nama, kategori, harga: parseInt(harga) || 0, aktif: initial?.aktif ?? true, has_addons: hasAddons, gambar },
       validResep.map((r) => ({ bahan_id: r.bahan_id, qty: r.qty, sat: r.sat }))
     );
     setSaving(false);
@@ -160,6 +161,16 @@ export default function ProdukForm({ initial, resepInitial, bahanBaku, kategoriO
                 placeholder="15000"
               />
             </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold th-muted uppercase tracking-wider">Bisa Addon</p>
+              <p className="text-[10px] th-muted">Tampilkan pilihan addon/varian saat dipesan</p>
+            </div>
+            <button type="button" onClick={() => setHasAddons(!hasAddons)} className={`w-12 h-6 rounded-full transition-colors ${hasAddons ? "bg-success" : "th-surface border th-border"}`}>
+              <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${hasAddons ? "translate-x-6" : "translate-x-0.5"}`} />
+            </button>
           </div>
 
           <div className="space-y-2">

@@ -73,6 +73,7 @@ export interface Produk {
   kategori: string;
   harga: number;
   aktif: boolean;
+  has_addons: boolean;
   gambar: string | null;
   created_at: string;
 }

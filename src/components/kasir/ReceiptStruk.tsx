@@ -19,6 +19,15 @@ interface Props {
   onClose: () => void;
 }
 
+function getCartItemKey(item: CartItem) {
+  return `${item.produk.id}-${(item.addons || []).map((a) => a.id).sort().join(",")}`;
+}
+
+function getCartItemPrice(item: CartItem) {
+  const addonTotal = (item.addons || []).reduce((s, a) => s + a.harga, 0);
+  return (item.produk.harga + addonTotal) * item.qty;
+}
+
 export default function ReceiptStruk({ receipt, onClose }: Props) {
   const { items, total, bayar, kembalian, transaksiId, waktu } = receipt;
 
@@ -35,13 +44,18 @@ export default function ReceiptStruk({ receipt, onClose }: Props) {
           <span className="font-mono th-muted">{transaksiId.slice(0, 8)}</span>
         </div>
         <div className="px-5 py-3 space-y-1.5 border-b th-border">
-          {items.map((item) => (
-            <div key={item.produk.id} className="flex justify-between text-sm">
-              <div className="flex-1 min-w-0">
-                <span className="th-text font-medium">{item.produk.nama}</span>
-                <span className="th-muted ml-1">x{item.qty}</span>
+          {items.map((item, idx) => (
+            <div key={getCartItemKey(item) || idx}>
+              <div className="flex justify-between text-sm">
+                <div className="flex-1 min-w-0">
+                  <span className="th-text font-medium">{item.produk.nama}</span>
+                  <span className="th-muted ml-1">x{item.qty}</span>
+                </div>
+                <span className="th-text font-semibold ml-3 whitespace-nowrap">{formatRupiah(getCartItemPrice(item))}</span>
               </div>
-              <span className="th-text font-semibold ml-3 whitespace-nowrap">{formatRupiah(item.produk.harga * item.qty)}</span>
+              {(item.addons || []).length > 0 && (
+                <p className="text-[10px] th-muted ml-2">+ {item.addons!.map((a) => a.nama).join(", ")}</p>
+              )}
             </div>
           ))}
         </div>
@@ -59,4 +73,3 @@ export default function ReceiptStruk({ receipt, onClose }: Props) {
     </div>
   );
 }
-
