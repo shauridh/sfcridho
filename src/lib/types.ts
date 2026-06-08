@@ -41,6 +41,7 @@ export interface Order {
   qris_string: string | null;
   confirm_token: string;
   location_url: string | null;
+  available_items: number[] | null;
   created_at: string;
   updated_at: string;
 }

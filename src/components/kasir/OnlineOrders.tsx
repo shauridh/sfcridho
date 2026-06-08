@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
-import { sendWhatsApp, getSettings } from "@/lib/whatsapp";
+import { sendWhatsApp, sendWhatsAppImage, getSettings } from "@/lib/whatsapp";
 import { convertQRIS } from "@/lib/qris";
 import { Order } from "@/lib/types";
 import { RefreshCw, CheckCircle, XCircle, Truck, Phone, AlertTriangle } from "lucide-react";
@@ -13,15 +13,47 @@ export default function OnlineOrders() {
   const [loading, setLoading] = useState(true);
   const [rejectingOrder, setRejectingOrder] = useState<Order | null>(null);
   const [rejectNote, setRejectNote] = useState("");
+  const [newOrderPopup, setNewOrderPopup] = useState<Order | null>(null);
+  const [prevOrderIds, setPrevOrderIds] = useState<Set<string>>(new Set());
+  const [itemChecks, setItemChecks] = useState<Record<string, boolean[]>>({});
+
+  const initItemChecks = useCallback((order: Order) => {
+    if (!itemChecks[order.id]) {
+      setItemChecks((prev) => ({ ...prev, [order.id]: order.items.map(() => true) }));
+    }
+  }, [itemChecks]);
+
+  const toggleItem = (orderId: string, idx: number) => {
+    setItemChecks((prev) => {
+      const checks = [...(prev[orderId] || [])];
+      checks[idx] = !checks[idx];
+      return { ...prev, [orderId]: checks };
+    });
+  };
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(50);
-    if (data) setOrders(data as Order[]);
+    if (data) {
+      const newOrders = data as Order[];
+      if (prevOrderIds.size > 0) {
+        const newPending = newOrders.filter((o) => o.status === "pending" && !prevOrderIds.has(o.id));
+        if (newPending.length > 0) {
+          setNewOrderPopup(newPending[0]);
+        }
+      }
+      setPrevOrderIds(new Set(newOrders.map((o) => o.id)));
+      setOrders(newOrders);
+    }
     setLoading(false);
-  }, []);
+  }, [prevOrderIds]);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => { fetchOrders(); }, []);
+
+  useEffect(() => {
+    const interval = setInterval(fetchOrders, 15000);
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
 
   const handleConfirmAndPay = async (order: Order) => {
     const settings = await getSettings();
@@ -33,18 +65,41 @@ export default function OnlineOrders() {
       return;
     }
 
-    await supabase.from("orders").update({ status: "confirmed", updated_at: new Date().toISOString() }).eq("id", order.id);
+    const checks = itemChecks[order.id] || order.items.map(() => true);
+    const availableItems = order.items.filter((_, i) => checks[i]);
+    const unavailableItems = order.items.filter((_, i) => !checks[i]);
+    const adjustedTotal = availableItems.reduce((s, item) => s + item.subtotal, 0);
+    const availableIndices = checks.map((c, i) => c ? i : -1).filter((i) => i >= 0);
 
-    const dynamicQris = convertQRIS(staticQris, { amount: order.total });
+    await supabase.from("orders").update({
+      status: "confirmed",
+      total: adjustedTotal,
+      available_items: availableIndices,
+      updated_at: new Date().toISOString(),
+    }).eq("id", order.id);
+
+    const dynamicQris = convertQRIS(staticQris, { amount: adjustedTotal });
     await supabase.from("orders").update({ qris_string: dynamicQris }).eq("id", order.id);
 
     const confirmUrl = `${window.location.origin}/api/orders/confirm/${order.confirm_token}`;
-    const items = order.items.map((i) => `${i.nama} x${i.qty}`).join(", ");
 
-    const msgCustomer = `*${storeName}*\nPesanan Anda dikonfirmasi!\n\n${items}\nTotal: Rp ${order.total.toLocaleString("id-ID")}\n\nSilakan lakukan pembayaran via QRIS:\n${confirmUrl}\n\nSetelah bayar, klik link di atas atau kirim bukti bayar via chat ini.`;
+    let itemsText = availableItems.map((i) => `✅ ${i.nama} x${i.qty} — ${formatRupiah(i.subtotal)}`).join("\n");
+    if (unavailableItems.length > 0) {
+      itemsText += "\n" + unavailableItems.map((i) => `❌ ${i.nama} — habis`).join("\n");
+    }
+
+    const msgCustomer = `*${storeName}*\nPesanan Anda dikonfirmasi!\n\n${itemsText}\n\nTotal: Rp ${adjustedTotal.toLocaleString("id-ID")}\n\nSilakan scan QRIS di atas untuk pembayaran.\nSetelah bayar, kirim bukti bayar via chat ini.`;
     await sendWhatsApp(msgCustomer, order.phone);
 
-    const msgOwner = `*${storeName}*\nPesanan dikonfirmasi & QRIS dikirim:\n${order.nama} (${order.phone})\nTotal: Rp ${order.total.toLocaleString("id-ID")}`;
+    try {
+      const QRCodeLib = await import("qrcode");
+      const qrDataUrl = await QRCodeLib.default.toDataURL(dynamicQris, { width: 400, margin: 2, color: { dark: "#000000", light: "#FFFFFF" } });
+      await sendWhatsAppImage(qrDataUrl, order.phone, `QRIS Pembayaran ${storeName} — Rp ${adjustedTotal.toLocaleString("id-ID")}`);
+    } catch (qrErr) {
+      console.error("Failed to send QR image:", qrErr);
+    }
+
+    const msgOwner = `*${storeName}*\nPesanan dikonfirmasi & QRIS dikirim:\n${order.nama} (${order.phone})\nTotal: Rp ${adjustedTotal.toLocaleString("id-ID")}${unavailableItems.length > 0 ? `\n${unavailableItems.length} item habis` : ""}`;
     await sendWhatsApp(msgOwner);
 
     fetchOrders();
@@ -121,7 +176,9 @@ export default function OnlineOrders() {
         <p className="text-xs th-muted py-4 text-center">Belum ada pesanan online</p>
       )}
 
-      {activeOrders.map((order) => (
+      {activeOrders.map((order) => {
+        initItemChecks(order);
+        return (
         <div key={order.id} className="th-card border th-border rounded-xl p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -144,18 +201,42 @@ export default function OnlineOrders() {
           )}
 
           <div className="space-y-0.5">
-            {order.items.map((item, i) => (
-              <div key={i} className="flex justify-between text-xs">
-                <span className="th-text-secondary">{item.nama} × {item.qty}</span>
-                <span className="th-text">{formatRupiah(item.subtotal)}</span>
-              </div>
-            ))}
+            {order.items.map((item, i) => {
+              const checks = itemChecks[order.id] || order.items.map(() => true);
+              const isChecked = checks[i] !== false;
+              const isPending = order.status === "pending";
+              return (
+                <div key={i} className={`flex items-center justify-between text-xs ${isPending && !isChecked ? "opacity-50 line-through" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    {isPending && (
+                      <input type="checkbox" checked={isChecked} onChange={() => toggleItem(order.id, i)} className="w-4 h-4 rounded accent-green-500 cursor-pointer" />
+                    )}
+                    <span className="th-text-secondary">{item.nama} × {item.qty}</span>
+                  </div>
+                  <span className={isChecked ? "th-text" : "text-danger"}>{isChecked ? formatRupiah(item.subtotal) : "habis"}</span>
+                </div>
+              );
+            })}
           </div>
 
           {order.catatan && <p className="text-xs th-muted italic">Catatan: {order.catatan}</p>}
 
           <div className="flex justify-between items-center border-t th-border pt-2">
-            <span className="text-sm font-bold th-accent">{formatRupiah(order.total)}</span>
+            <div>
+              {order.status === "pending" ? (() => {
+                const checks = itemChecks[order.id] || order.items.map(() => true);
+                const adjustedTotal = order.items.filter((_, i) => checks[i]).reduce((s, item) => s + item.subtotal, 0);
+                const hasUnchecked = checks.some((c) => !c);
+                return (
+                  <div>
+                    <span className="text-sm font-bold th-accent">{formatRupiah(adjustedTotal)}</span>
+                    {hasUnchecked && <span className="text-[10px] th-muted ml-2 line-through">{formatRupiah(order.total)}</span>}
+                  </div>
+                );
+              })() : (
+                <span className="text-sm font-bold th-accent">{formatRupiah(order.total)}</span>
+              )}
+            </div>
             <div className="flex gap-1.5">
               {order.status === "pending" && (
                 <>
@@ -183,7 +264,36 @@ export default function OnlineOrders() {
             </div>
           </div>
         </div>
-      ))}
+        );
+      })}
+
+      {newOrderPopup && (
+        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4">
+          <div className="th-card border th-border rounded-2xl w-full max-w-sm shadow-xl border-amber-300 dark:border-amber-700">
+            <div className="p-5 border-b th-border bg-amber-50 dark:bg-amber-950/20">
+              <h2 className="text-lg font-bold th-text">🔔 Pesanan Baru!</h2>
+              <p className="text-xs th-muted mt-1">{newOrderPopup.nama} ({newOrderPopup.phone})</p>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="space-y-1">
+                {newOrderPopup.items.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="th-text">{item.nama} × {item.qty}</span>
+                    <span className="font-semibold th-accent">{formatRupiah(item.subtotal)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t th-border pt-2 flex justify-between">
+                <span className="font-bold th-text">Total</span>
+                <span className="font-bold th-accent text-lg">{formatRupiah(newOrderPopup.total)}</span>
+              </div>
+              <button onClick={() => setNewOrderPopup(null)} className="w-full py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
+                Lihat Pesanan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {rejectingOrder && (
         <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4">

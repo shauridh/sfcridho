@@ -157,6 +157,51 @@ export function useStok() {
     return { error: null };
   };
 
+  const gorengHarian = async (jumlahBatch: number) => {
+    const ayam = bahanBaku.find((b) => b.kategori.toLowerCase() === "ayam");
+    const tepung = bahanBaku.find((b) => b.nama.toLowerCase().includes("tepung"));
+    const minyak = bahanBaku.find((b) => b.nama.toLowerCase().includes("minyak"));
+
+    if (!ayam) return { error: new Error("Bahan 'Ayam' tidak ditemukan. Pastikan kategori Ayam ada.") };
+
+    const ayamPakDipakai = jumlahBatch * 3;
+    const ayamPotongDipakai = ayamPakDipakai * ayam.isi_per_pak;
+    const tepungKgDipakai = tepung ? jumlahBatch * 1 : 0;
+    const minyakLDipakai = minyak ? 2 : 0;
+
+    if (ayam.stok < ayamPotongDipakai) return { error: new Error(`Stok ayam mentah tidak cukup (butuh ${ayamPotongDipakai}, tersedia ${ayam.stok})`) };
+    if (tepung && tepung.stok < tepungKgDipakai) return { error: new Error(`Stok tepung tidak cukup (butuh ${tepungKgDipakai} kg, tersedia ${tepung.stok})`) };
+    if (minyak && minyak.stok < minyakLDipakai) return { error: new Error(`Stok minyak tidak cukup (butuh ${minyakLDipakai} L, tersedia ${minyak.stok})`) };
+
+    await supabase.from("bahan_baku").update({
+      stok: ayam.stok - ayamPotongDipakai,
+      stok_goreng: (ayam.stok_goreng || 0) + ayamPotongDipakai,
+    }).eq("id", ayam.id);
+    await supabase.from("stok_log").insert({
+      bahan_id: ayam.id, tipe: "goreng", qty: ayamPotongDipakai,
+      referensi: `Goreng harian ${jumlahBatch} batch (${ayamPakDipakai} pak = ${ayamPotongDipakai} potong)`,
+    });
+
+    if (tepung && tepungKgDipakai > 0) {
+      await supabase.from("bahan_baku").update({ stok: tepung.stok - tepungKgDipakai }).eq("id", tepung.id);
+      await supabase.from("stok_log").insert({
+        bahan_id: tepung.id, tipe: "goreng", qty: -tepungKgDipakai,
+        referensi: `Pakai ${tepungKgDipakai} kg untuk goreng harian ${jumlahBatch} batch`,
+      });
+    }
+
+    if (minyak && minyakLDipakai > 0) {
+      await supabase.from("bahan_baku").update({ stok: minyak.stok - minyakLDipakai }).eq("id", minyak.id);
+      await supabase.from("stok_log").insert({
+        bahan_id: minyak.id, tipe: "goreng", qty: -minyakLDipakai,
+        referensi: `Pakai ${minyakLDipakai} L minyak untuk goreng harian`,
+      });
+    }
+
+    await fetchBahanBaku();
+    return { error: null };
+  };
+
   return {
     bahanBaku,
     forecast: getForecast(),
@@ -168,6 +213,7 @@ export function useStok() {
     restock,
     opname,
     goreng,
+    gorengHarian,
     refresh: fetchBahanBaku,
   };
 }

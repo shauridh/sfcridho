@@ -51,6 +51,41 @@ export async function sendWhatsApp(message: string, to?: string): Promise<{ succ
   }
 }
 
+export async function sendWhatsAppImage(base64Image: string, to: string, caption?: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const settings = await getSettings();
+    const apiKey = settings.wa_api_key;
+    const sender = settings.wa_sender || settings.wa_phone;
+    const storeName = settings.store_name || "Sabana FC";
+
+    if (!apiKey || !to) {
+      return { success: false, error: "WhatsApp belum dikonfigurasi atau nomor tujuan kosong" };
+    }
+
+    const resp = await fetch("/api/whatsapp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        sender: sender,
+        number: to,
+        type: "image",
+        image: base64Image,
+        caption: caption || `Sent via ${storeName}`,
+      }),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      return { success: false, error: `HTTP ${resp.status}: ${text}` };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Gagal mengirim gambar" };
+  }
+}
+
 export function formatLaporanWA(data: {
   storeName: string;
   date: string;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
-import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle, MapPin } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle, MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import { sendWhatsApp, getSettings } from "@/lib/whatsapp";
 
 interface MenuItem {
@@ -30,6 +30,7 @@ export default function OrderPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [filterKategori, setFilterKategori] = useState("Semua");
+  const [collapsedKategori, setCollapsedKategori] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     supabase.from("produk").select("id, nama, harga, kategori").eq("aktif", true).order("kategori").order("nama").then(({ data }) => {
@@ -101,9 +102,6 @@ export default function OrderPage() {
       const itemsList = cart.map((c) => `${c.nama} x${c.qty}`).join(", ");
       const locationLine = locationUrl ? `\n📍 Lokasi: ${locationUrl}` : "";
 
-      const customerMsg = `*${storeName}*\nTerima kasih telah memesan!\n\nPesanan Anda:\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}\n\nAdmin akan mengecek ketersediaan dan menghubungi Anda via WhatsApp.`;
-      await sendWhatsApp(customerMsg, phone.trim());
-
       const ownerMsg = `*${storeName}*\nPesanan online baru!\n\nDari: ${nama.trim()}\nNo: ${phone.trim()}\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}${locationLine}\n\nBuka kasir untuk konfirmasi.`;
       await sendWhatsApp(ownerMsg);
 
@@ -141,30 +139,63 @@ export default function OrderPage() {
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {kategoriList.map((k) => (
-            <button key={k} onClick={() => setFilterKategori(k)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${filterKategori === k ? "th-accent-bg text-white" : "th-card border th-border th-muted"}`}>
-              {k}
-            </button>
-          ))}
+          {kategoriList.filter((k) => k !== "Semua").map((k) => {
+            const isCollapsed = collapsedKategori.has(k);
+            return (
+              <button key={k} onClick={() => {
+                setCollapsedKategori((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(k)) next.delete(k); else next.add(k);
+                  return next;
+                });
+              }} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${isCollapsed ? "th-card border th-border th-muted" : "th-accent-bg text-white"}`}>
+                {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />} {k}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="space-y-2">
-          {filtered.map((item) => {
-            const inCart = cart.find((c) => c.id === item.id);
+        <div className="space-y-3">
+          {kategoriList.filter((k) => k !== "Semua").map((k) => {
+            const items = filtered.filter((item) => item.kategori === k);
+            if (items.length === 0) return null;
+            const isCollapsed = collapsedKategori.has(k);
             return (
-              <div key={item.id} className="th-card border th-border rounded-xl p-3 flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium th-text truncate">{item.nama}</p>
-                  <p className="text-xs th-accent font-bold">{formatRupiah(item.harga)}</p>
-                </div>
-                {inCart ? (
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => updateQty(item.id, inCart.qty - 1)} className="w-8 h-8 rounded-lg border th-border flex items-center justify-center th-muted touch-target"><Minus size={14} /></button>
-                    <span className="text-sm font-bold th-text w-6 text-center">{inCart.qty}</span>
-                    <button onClick={() => updateQty(item.id, inCart.qty + 1)} className="w-8 h-8 rounded-lg border th-border flex items-center justify-center th-muted touch-target"><Plus size={14} /></button>
+              <div key={k}>
+                <button onClick={() => {
+                  setCollapsedKategori((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(k)) next.delete(k); else next.add(k);
+                    return next;
+                  });
+                }} className="flex items-center gap-2 w-full text-left mb-2">
+                  {isCollapsed ? <ChevronRight size={14} className="th-muted" /> : <ChevronDown size={14} className="th-muted" />}
+                  <span className="text-xs font-bold th-muted uppercase">{k}</span>
+                  <span className="text-[10px] th-muted">({items.length})</span>
+                </button>
+                {!isCollapsed && (
+                  <div className="space-y-2">
+                    {items.map((item) => {
+                      const inCart = cart.find((c) => c.id === item.id);
+                      return (
+                        <div key={item.id} className="th-card border th-border rounded-xl p-3 flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium th-text truncate">{item.nama}</p>
+                            <p className="text-xs th-accent font-bold">{formatRupiah(item.harga)}</p>
+                          </div>
+                          {inCart ? (
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => updateQty(item.id, inCart.qty - 1)} className="w-8 h-8 rounded-lg border th-border flex items-center justify-center th-muted touch-target"><Minus size={14} /></button>
+                              <span className="text-sm font-bold th-text w-6 text-center">{inCart.qty}</span>
+                              <button onClick={() => updateQty(item.id, inCart.qty + 1)} className="w-8 h-8 rounded-lg border th-border flex items-center justify-center th-muted touch-target"><Plus size={14} /></button>
+                            </div>
+                          ) : (
+                            <button onClick={() => addToCart(item)} className="px-3 py-1.5 th-accent-bg text-white rounded-lg text-xs font-semibold touch-target"><Plus size={14} className="inline" /></button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                ) : (
-                  <button onClick={() => addToCart(item)} className="px-3 py-1.5 th-accent-bg text-white rounded-lg text-xs font-semibold touch-target"><Plus size={14} className="inline" /></button>
                 )}
               </div>
             );
