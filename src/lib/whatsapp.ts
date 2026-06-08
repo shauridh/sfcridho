@@ -94,7 +94,6 @@ export async function sendWhatsApp(message: string, to?: string): Promise<{ succ
         sender: sender,
         number: targetPhone,
         message: message,
-        footer: `Sent via ${storeName}`,
       }),
     });
 

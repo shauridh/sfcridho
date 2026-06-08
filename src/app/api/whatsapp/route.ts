@@ -3,7 +3,7 @@
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { api_key, sender, number, message, footer, type, image, caption } = body;
+    const { api_key, sender, number, message, type, image, caption } = body;
 
     if (!api_key || !number) {
       return NextResponse.json({ success: false, error: "Parameter tidak lengkap" }, { status: 400 });
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     const resp = await fetch("https://seen.getsender.id/send-message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ api_key, sender, number, message, footer }),
+      body: JSON.stringify({ api_key, sender, number, message }),
     });
 
     const text = await resp.text();
