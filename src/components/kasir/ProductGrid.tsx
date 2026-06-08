@@ -27,7 +27,7 @@ export default function ProductGrid({ produk, onAdd }: Props) {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2 md:gap-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 md:gap-3">
         {produk.map((p) => {
           const badgeClass = KATEGORI_BADGE[p.kategori] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
           const hasImage = p.gambar && p.gambar.length > 0;
@@ -54,7 +54,7 @@ export default function ProductGrid({ produk, onAdd }: Props) {
                 <span className={`inline-block self-start text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded mb-1.5 ${badgeClass}`}>
                   {p.kategori}
                 </span>
-                <div className="font-bold th-text text-sm leading-tight mb-auto min-h-[2.5rem] flex items-center">
+                <div className="font-bold th-text text-sm leading-tight mb-auto min-h-[2.5rem] flex items-center line-clamp-2">
                   {p.nama}
                 </div>
                 <div className="th-accent font-bold text-base mt-2">

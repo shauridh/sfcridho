@@ -154,8 +154,8 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
               <label className="block text-xs font-semibold th-muted uppercase tracking-wider mb-1.5">Nominal Bayar (Rp)</label>
               <input type="text" inputMode="numeric" value={bayar} onChange={(e) => { setBayar(e.target.value); setError(""); }} autoFocus className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button type="button" onClick={handlePas} className="py-2.5 bg-red-50 dark:bg-red-950/40 border th-border rounded-xl text-xs font-semibold th-accent hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors touch-target">Pas</button>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(80px,1fr))] gap-2">
+              <button type="button" onClick={handlePas} className="py-2.5 bg-red-50 dark:bg-red-950/40 border th-border rounded-xl text-xs font-semibold th-accent hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors touch-target truncate px-1">Pas</button>
               {nominalCepat.map((n) => (
                 <button key={n} type="button" onClick={() => handleNominalCepat(n)} className="py-2.5 th-card border th-border rounded-xl text-xs font-semibold th-text-secondary hover:th-text hover:border-accent/30 transition-colors touch-target truncate px-1">{formatRupiah(n)}</button>
               ))}

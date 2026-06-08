@@ -212,10 +212,10 @@ export default function KasirPage() {
   }
 
   return (
-    <div className="flex h-full relative">
+    <div className="flex h-full relative bg-red-50/30 dark:bg-red-950/10">
       <div className="flex-1 flex flex-col overflow-hidden p-3 md:p-4">
         <div className="flex items-center gap-2 mb-3 md:mb-4">
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-x-auto scrollbar-hide">
             <KategoriBar kategoriList={kategoriList} active={filterKategori} onSelect={setFilterKategori} onReorder={handleReorderKategori} />
           </div>
           {onlineDelivery && (
@@ -234,18 +234,20 @@ export default function KasirPage() {
           </div>
         )}
 
-        <ProductGrid produk={filteredProduk} onAdd={(produkId) => {
-          const p = activeProduk.find((pr) => pr.id === produkId);
-          if (availableAddons.length > 0 && p?.has_addons) {
-            setAddonModal(produkId);
-            setSelectedAddons([]);
-          } else {
-            addToCart(produkId);
-          }
-        }} />
+        <div className="flex-1 min-h-0">
+          <ProductGrid produk={filteredProduk} onAdd={(produkId) => {
+            const p = activeProduk.find((pr) => pr.id === produkId);
+            if (availableAddons.length > 0 && p?.has_addons) {
+              setAddonModal(produkId);
+              setSelectedAddons([]);
+            } else {
+              addToCart(produkId);
+            }
+          }} />
+        </div>
       </div>
 
-      <div className="hidden md:block w-[36%] min-w-[300px] border-l th-border">
+      <div className="hidden md:block w-[40%] min-w-[340px] border-l th-border">
         <Cart items={cart} total={total} onUpdateQty={updateQty} onClear={clearCart} onBayar={() => setShowPayment(true)} />
       </div>
 
