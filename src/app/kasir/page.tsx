@@ -92,6 +92,11 @@ export default function KasirPage() {
     return ["Semua", ...fromProduk];
   }, [activeProduk, kategoriOrder]);
 
+  const getCartItemPrice = (item: CartItem) => {
+    const addonTotal = (item.addons || []).reduce((s, a) => s + a.harga, 0);
+    return (item.produk.harga + addonTotal) * item.qty;
+  };
+
   const filteredProduk = filterKategori === "Semua" ? activeProduk : activeProduk.filter((p) => p.kategori === filterKategori);
   const total = cart.reduce((sum, item) => sum + getCartItemPrice(item), 0);
 
@@ -104,11 +109,6 @@ export default function KasirPage() {
       if (existing) return prev.map((item) => item === existing ? { ...item, qty: item.qty + 1 } : item);
       return [...prev, { produk: p, qty: 1, addons }];
     });
-  };
-
-  const getCartItemPrice = (item: CartItem) => {
-    const addonTotal = (item.addons || []).reduce((s, a) => s + a.harga, 0);
-    return (item.produk.harga + addonTotal) * item.qty;
   };
 
   const updateQty = (produkId: string, qty: number, addons?: { id: string; nama: string; harga: number }[]) => {
@@ -229,7 +229,8 @@ export default function KasirPage() {
         )}
 
         <ProductGrid produk={filteredProduk} onAdd={(produkId) => {
-          if (availableAddons.length > 0) {
+          const p = activeProduk.find((pr) => pr.id === produkId);
+          if (availableAddons.length > 0 && p?.has_addons) {
             setAddonModal(produkId);
             setSelectedAddons([]);
           } else {
