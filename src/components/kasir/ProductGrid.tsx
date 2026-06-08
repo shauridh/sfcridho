@@ -27,7 +27,7 @@ export default function ProductGrid({ produk, onAdd }: Props) {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2 md:gap-3">
         {produk.map((p) => {
           const badgeClass = KATEGORI_BADGE[p.kategori] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
           const hasImage = p.gambar && p.gambar.length > 0;
