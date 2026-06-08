@@ -37,7 +37,7 @@ export interface Order {
   items: { nama: string; qty: number; harga: number; subtotal: number }[];
   catatan: string | null;
   total: number;
-  status: "pending" | "confirmed" | "paid" | "done" | "cancelled";
+  status: "pending" | "confirmed" | "paid" | "done" | "cancelled" | "unavailable";
   qris_string: string | null;
   confirm_token: string;
   created_at: string;

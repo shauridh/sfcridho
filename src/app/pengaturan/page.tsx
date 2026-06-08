@@ -9,7 +9,7 @@ import { AppUser, Akun, TIPE_AKUN_OPTIONS } from "@/lib/types";
 import { Store, Users, MessageCircle, Save, Plus, Trash2, Edit3, Wallet, QrCode, Shield } from "lucide-react";
 
 export default function PengaturanPage() {
-  const { changePin } = useAuth();
+  const { currentUser } = useAuth();
   const [tab, setTab] = useState<"store" | "users" | "wa" | "akun" | "qris" | "pin">("store");
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -329,21 +329,21 @@ export default function PengaturanPage() {
 
       {tab === "pin" && (
         <div className="th-card border th-border rounded-2xl p-4 md:p-5 shadow-sm max-w-lg space-y-4">
-          <h3 className="font-bold th-text">Ubah PIN Admin</h3>
-          <p className="text-xs th-text-secondary">PIN digunakan untuk mengakses halaman Kas dan Pengaturan.</p>
+          <h3 className="font-bold th-text">Ubah PIN Saya</h3>
+          <p className="text-xs th-text-secondary">PIN digunakan untuk login. Akun: <b>{currentUser?.username}</b> ({currentUser?.role})</p>
           <div>
-            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">PIN Baru (6 digit)</label>
+            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">PIN Baru (4-6 digit)</label>
             <input type="password" inputMode="numeric" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ""))} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent tracking-[0.5em] text-center font-bold" placeholder="······" />
           </div>
           <button onClick={async () => {
-            if (newPin.length !== 6) return;
+            if (newPin.length < 4 || !currentUser) return;
             setSaving(true);
-            await changePin(newPin);
+            await supabase.from("app_users").update({ pin_hash: newPin }).eq("id", currentUser.id);
             setNewPin("");
             setPinSaved(true);
             setTimeout(() => setPinSaved(false), 3000);
             setSaving(false);
-          }} disabled={saving || newPin.length !== 6} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
+          }} disabled={saving || newPin.length < 4} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
             {saving ? "Menyimpan..." : pinSaved ? "PIN Tersimpan!" : "Simpan PIN"}
           </button>
         </div>

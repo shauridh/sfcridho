@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ShoppingCart, Package, UtensilsCrossed, Wallet, Sun, Moon, Settings, Lock } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, UtensilsCrossed, Wallet, Sun, Moon, Settings, Lock, LogOut } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useShiftAction } from "@/components/ShiftActionContext";
+import { useAuth } from "@/components/AuthProvider";
 import { clsx } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -23,6 +24,7 @@ export default function Sidebar({ alertCount }: SidebarProps) {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
   const { showTutupShift, onTutupShift } = useShiftAction();
+  const { currentUser, logout } = useAuth();
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-16 th-sidebar border-r th-border flex flex-col items-center py-4 z-50 shadow-sm">
@@ -88,6 +90,15 @@ export default function Sidebar({ alertCount }: SidebarProps) {
         >
           {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
         </button>
+        {currentUser && (
+          <button
+            onClick={logout}
+            className="w-10 h-10 rounded-xl flex items-center justify-center th-muted hover:text-danger hover:th-surface transition-all touch-target mx-auto"
+            title={`Keluar (${currentUser.nama})`}
+          >
+            <LogOut size={18} />
+          </button>
+        )}
       </div>
     </aside>
   );

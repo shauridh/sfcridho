@@ -49,7 +49,7 @@ export default function AdminPinModal({ title, message, onConfirm, onClose }: Pr
               onChange={(e) => { setPin(e.target.value.replace(/[^0-9]/g, "")); setError(""); }}
               autoFocus
               className="w-full px-4 py-3 th-card border th-border rounded-xl text-lg font-bold th-text tracking-[0.5em] focus:outline-none focus:border-accent text-center"
-              placeholder="Â·Â·Â·Â·"
+              placeholder="····"
             />
           </div>
           {error && <p className="text-sm text-danger text-center">{error}</p>}

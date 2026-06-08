@@ -1,70 +1,83 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from "react";
-import { getSettings, updateSetting } from "@/lib/whatsapp";
+import { AppUser } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 interface AuthContextType {
-  pinVerified: boolean;
-  verifyPin: (pin: string) => Promise<boolean>;
-  changePin: (newPin: string) => Promise<void>;
-  isProtectedRoute: (path: string) => boolean;
+  currentUser: AppUser | null;
+  login: (username: string, pin: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  pinVerified: false,
-  verifyPin: async () => false,
-  changePin: async () => {},
-  isProtectedRoute: () => false,
+  currentUser: null,
+  login: async () => ({ success: false }),
+  logout: () => {},
+  loading: true,
 });
 
-const PROTECTED_ROUTES = ["/kas", "/pengaturan"];
+const SESSION_KEY = "sabana_user_session";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [pinVerified, setPinVerified] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try {
-      const session = localStorage.getItem("pin_session");
-      if (session === "verified") setPinVerified(true);
-    } catch {}
+      const stored = localStorage.getItem(SESSION_KEY);
+      if (stored) {
+        const user = JSON.parse(stored) as AppUser;
+        if (user.id && user.username && user.role) {
+          setCurrentUser(user);
+        } else {
+          localStorage.removeItem(SESSION_KEY);
+        }
+      }
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
+    }
     setLoading(false);
   }, []);
 
-  const verifyPin = useCallback(async (pin: string): Promise<boolean> => {
+  const login = useCallback(async (username: string, pin: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const settings = await getSettings();
-      const storedPin = settings.admin_pin || "271222";
-      if (pin === storedPin) {
-        setPinVerified(true);
-        localStorage.setItem("pin_session", "verified");
-        return true;
-      }
-      return false;
-    } catch {
-      if (pin === "271222") {
-        setPinVerified(true);
-        localStorage.setItem("pin_session", "verified");
-        return true;
-      }
-      return false;
+      const { data, error } = await supabase.rpc("verify_login", {
+        p_username: username.trim(),
+        p_pin: pin.trim(),
+      });
+
+      if (error) return { success: false, error: "Gagal verifikasi: " + error.message };
+      if (!data || data.length === 0) return { success: false, error: "Username atau PIN salah" };
+
+      const user: AppUser = {
+        id: data[0].id,
+        username: data[0].username,
+        nama: data[0].nama,
+        role: data[0].role,
+        aktif: true,
+      };
+
+      setCurrentUser(user);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Terjadi kesalahan" };
     }
   }, []);
 
-  const changePin = useCallback(async (newPin: string) => {
-    await updateSetting("admin_pin", newPin);
-  }, []);
-
-  const isProtectedRoute = useCallback((path: string) => {
-    return PROTECTED_ROUTES.some((r) => path.startsWith(r));
+  const logout = useCallback(() => {
+    setCurrentUser(null);
+    localStorage.removeItem(SESSION_KEY);
   }, []);
 
   const value = useMemo(() => ({
-    pinVerified,
-    verifyPin,
-    changePin,
-    isProtectedRoute,
-  }), [pinVerified, verifyPin, changePin, isProtectedRoute]);
+    currentUser,
+    login,
+    logout,
+    loading,
+  }), [currentUser, login, logout, loading]);
 
   if (loading) {
     return (

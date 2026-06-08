@@ -76,6 +76,10 @@ export default function OrderPage() {
       const settings = await getSettings();
       const storeName = settings.store_name || "Sabana FC";
       const itemsList = cart.map((c) => `${c.nama} x${c.qty}`).join(", ");
+
+      const customerMsg = `*${storeName}*\nTerima kasih telah memesan!\n\nPesanan Anda:\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}\n\nAdmin akan mengecek ketersediaan dan menghubungi Anda via WhatsApp.`;
+      await sendWhatsApp(customerMsg, phone.trim());
+
       const ownerMsg = `*${storeName}*\nPesanan online baru!\n\nDari: ${nama.trim()}\nNo: ${phone.trim()}\n${itemsList}\nTotal: Rp ${total.toLocaleString("id-ID")}\n\nBuka kasir untuk konfirmasi.`;
       await sendWhatsApp(ownerMsg);
 
