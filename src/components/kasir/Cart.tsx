@@ -39,7 +39,7 @@ export default function Cart({ items, total, onUpdateQty, onClear, onBayar }: Pr
         )}
       </div>
 
-      <div className="flex-1 overflow-auto px-5 py-3 pb-24 space-y-2">
+      <div className="flex-1 overflow-auto px-5 py-3 pb-24 space-y-2 overscroll-contain">
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full th-muted">
             <ShoppingBag size={40} className="mb-3 opacity-30" />

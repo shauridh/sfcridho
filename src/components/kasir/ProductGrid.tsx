@@ -26,7 +26,7 @@ export default function ProductGrid({ produk, onAdd }: Props) {
   }
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 overflow-auto overscroll-contain">
       <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 md:gap-3">
         {produk.map((p) => {
           const badgeClass = KATEGORI_BADGE[p.kategori] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
