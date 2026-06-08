@@ -8,7 +8,7 @@ export interface WATemplate {
 }
 
 export const WA_TEMPLATE_TYPES = [
-  { key: "new_order", label: "Pesanan Baru (ke Admin)", placeholders: "{store_name}, {nama}, {phone}, {items}, {subtotal}, {ongkir}, {total}, {location}" },
+  { key: "new_order", label: "Pesanan Baru (ke Admin)", placeholders: "{store_name}, {nama}, {phone}, {items}, {subtotal}, {ongkir}, {total}, {location}, {patokan}" },
   { key: "confirm", label: "Konfirmasi + QRIS (ke Customer)", placeholders: "{store_name}, {nama}, {items}, {total}, {ongkir}, {available_items}, {unavailable_items}" },
   { key: "reject", label: "Tolak Pesanan (ke Customer)", placeholders: "{store_name}, {catatan}" },
   { key: "done", label: "Pesanan Selesai (ke Customer)", placeholders: "{store_name}" },

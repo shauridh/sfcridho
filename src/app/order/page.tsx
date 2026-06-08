@@ -87,8 +87,8 @@ export default function OrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nama.trim() || !phone.trim() || cart.length === 0) {
-      setError("Nama, nomor WA, dan pesanan wajib diisi");
+    if (!nama.trim() || !phone.trim() || !alamat.trim() || cart.length === 0) {
+      setError("Nama, nomor WA, alamat, dan pesanan wajib diisi");
       return;
     }
     setLoading(true);
@@ -118,6 +118,7 @@ export default function OrderPage() {
           ongkir: ongkir > 0 ? formatRupiah(ongkir) : "-",
           total: total.toLocaleString("id-ID"),
           location: locationLine,
+          patokan: catatan.trim() || "-",
         });
         await sendWhatsApp(ownerMsg);
       }
@@ -269,8 +270,8 @@ export default function OrderPage() {
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="08xxxxxxxxxx" />
           </div>
           <div>
-            <label className="text-xs font-semibold th-muted uppercase mb-1 block">Alamat</label>
-            <textarea value={alamat} onChange={(e) => setAlamat(e.target.value)} rows={2} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent resize-none" placeholder="Alamat pengiriman (opsional)" />
+            <label className="text-xs font-semibold th-muted uppercase mb-1 block">Alamat *</label>
+            <textarea value={alamat} onChange={(e) => setAlamat(e.target.value)} rows={2} required className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent resize-none" placeholder="Alamat pengiriman" />
             <button type="button" onClick={handleGetLocation} disabled={locating} className="mt-2 flex items-center gap-2 px-3 py-2 w-full th-card border th-border rounded-xl text-sm th-text hover:border-accent transition-colors touch-target">
               <MapPin size={16} className={locationUrl ? "text-success" : "th-muted"} />
               {locating ? "Mengambil lokasi..." : locationUrl ? "✓ Lokasi tersimpan" : "📍 Ambil Lokasi Saya"}
@@ -280,8 +281,8 @@ export default function OrderPage() {
             )}
           </div>
           <div>
-            <label className="text-xs font-semibold th-muted uppercase mb-1 block">Catatan</label>
-            <input type="text" value={catatan} onChange={(e) => setCatatan(e.target.value)} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="Contoh: Pedas level 2, tanpa es" />
+            <label className="text-xs font-semibold th-muted uppercase mb-1 block">Patokan</label>
+            <input type="text" value={catatan} onChange={(e) => setCatatan(e.target.value)} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="Contoh: Depan warung soto, sebelah Indomaret" />
           </div>
           {error && <p className="text-sm text-danger">{error}</p>}
           <button type="submit" disabled={loading || cart.length === 0} className="w-full py-3.5 th-accent-bg text-white rounded-xl font-bold text-base hover:opacity-90 disabled:opacity-50 touch-target flex items-center justify-center gap-2">

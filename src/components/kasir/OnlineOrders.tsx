@@ -240,7 +240,7 @@ export default function OnlineOrders() {
             })}
           </div>
 
-          {order.catatan && <p className="text-xs th-muted italic">Catatan: {order.catatan}</p>}
+          {order.catatan && <p className="text-xs th-muted italic">📍 {order.catatan}</p>}
 
           <div className="flex justify-between items-center border-t th-border pt-2">
             <div>
