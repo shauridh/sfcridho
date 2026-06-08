@@ -58,7 +58,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <main className="flex-1 md:ml-16 flex flex-col overflow-hidden">
-        <AlertBanner bahanBaku={bahanBaku} />
+        {pathname !== "/kasir" && <AlertBanner bahanBaku={bahanBaku} />}
         <div className="flex-1 overflow-auto pb-16 md:pb-0">{children}</div>
       </main>
 

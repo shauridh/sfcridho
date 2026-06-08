@@ -13,8 +13,6 @@ export default function OnlineOrders() {
   const [loading, setLoading] = useState(true);
   const [rejectingOrder, setRejectingOrder] = useState<Order | null>(null);
   const [rejectNote, setRejectNote] = useState("");
-  const [newOrderPopup, setNewOrderPopup] = useState<Order | null>(null);
-  const [prevOrderIds, setPrevOrderIds] = useState<Set<string>>(new Set());
   const [itemChecks, setItemChecks] = useState<Record<string, boolean[]>>({});
 
   const initItemChecks = useCallback((order: Order) => {
@@ -35,25 +33,14 @@ export default function OnlineOrders() {
     setLoading(true);
     const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(50);
     if (data) {
-      const newOrders = data as Order[];
-      if (prevOrderIds.size > 0) {
-        const newPending = newOrders.filter((o) => o.status === "pending" && !prevOrderIds.has(o.id));
-        if (newPending.length > 0) {
-          setNewOrderPopup(newPending[0]);
-        }
-      }
-      setPrevOrderIds(new Set(newOrders.map((o) => o.id)));
-      setOrders(newOrders);
+      setOrders(data as Order[]);
     }
     setLoading(false);
-  }, [prevOrderIds]);
-
-  useEffect(() => { fetchOrders(); }, []);
+  }, []);
 
   useEffect(() => {
-    const interval = setInterval(fetchOrders, 15000);
-    return () => clearInterval(interval);
-  }, [fetchOrders]);
+    fetchOrders();
+  }, []);
 
   const handleConfirmAndPay = async (order: Order) => {
     const settings = await getSettings();
@@ -287,34 +274,6 @@ export default function OnlineOrders() {
         </div>
         );
       })}
-
-      {newOrderPopup && (
-        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4">
-          <div className="th-card border th-border rounded-2xl w-full max-w-sm shadow-xl border-amber-300 dark:border-amber-700">
-            <div className="p-5 border-b th-border bg-amber-50 dark:bg-amber-950/20">
-              <h2 className="text-lg font-bold th-text">🔔 Pesanan Baru!</h2>
-              <p className="text-xs th-muted mt-1">{newOrderPopup.nama} ({newOrderPopup.phone})</p>
-            </div>
-            <div className="p-5 space-y-3">
-              <div className="space-y-1">
-                {newOrderPopup.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span className="th-text">{item.nama} × {item.qty}</span>
-                    <span className="font-semibold th-accent">{formatRupiah(item.subtotal)}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t th-border pt-2 flex justify-between">
-                <span className="font-bold th-text">Total</span>
-                <span className="font-bold th-accent text-lg">{formatRupiah(newOrderPopup.total)}</span>
-              </div>
-              <button onClick={() => setNewOrderPopup(null)} className="w-full py-3 th-accent-bg text-white rounded-xl font-bold touch-target">
-                Lihat Pesanan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {rejectingOrder && (
         <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4">
