@@ -14,8 +14,6 @@ interface Props {
   loading: boolean;
 }
 
-const NOMINAL_CEPAT = [5000, 10000, 20000, 50000, 100000];
-
 export default function PaymentModal({ total, onClose, onBayar, loading }: Props) {
   const [metode, setMetode] = useState<"tunai" | "qris" | null>(null);
   const [bayar, setBayar] = useState("");
@@ -27,6 +25,33 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
   const nominal = parseInt(bayar.replace(/[^0-9]/g, ""), 10) || 0;
   const kembalian = nominal - total;
   const cukup = nominal >= total;
+
+  // Generate smart nominal suggestions based on total
+  const nominalCepat = (() => {
+    const roundedTotal = Math.ceil(total / 1000) * 1000; // Round up to nearest 1000
+    const suggestions = new Set<number>();
+    
+    // Add amounts relative to total
+    if (total < 50000) {
+      suggestions.add(roundedTotal + 5000);
+      suggestions.add(roundedTotal + 10000);
+      suggestions.add(roundedTotal + 20000);
+    } else {
+      suggestions.add(roundedTotal + 10000);
+      suggestions.add(roundedTotal + 20000);
+      suggestions.add(roundedTotal + 50000);
+    }
+    
+    // Always include 50k and 100k
+    suggestions.add(50000);
+    suggestions.add(100000);
+    
+    // Convert to array, sort, and filter out values <= total
+    return Array.from(suggestions)
+      .filter(n => n > total)
+      .sort((a, b) => a - b)
+      .slice(0, 5); // Max 5 suggestions
+  })();
 
   const handleNominalCepat = (nilai: number) => { setBayar(nilai.toString()); setError(""); };
   const handlePas = () => { setBayar(Math.ceil(total / 1000) * 1000 + ""); setError(""); };
@@ -130,10 +155,10 @@ export default function PaymentModal({ total, onClose, onBayar, loading }: Props
               <input type="text" inputMode="numeric" value={bayar} onChange={(e) => { setBayar(e.target.value); setError(""); }} autoFocus className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
             </div>
             <div className="flex flex-wrap gap-2">
-              {NOMINAL_CEPAT.map((n) => (
+              <button type="button" onClick={handlePas} className="flex-1 min-w-[70px] py-2.5 bg-red-50 dark:bg-red-950/40 border th-border rounded-xl text-xs font-semibold th-accent hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors touch-target">Pas</button>
+              {nominalCepat.map((n) => (
                 <button key={n} type="button" onClick={() => handleNominalCepat(n)} className="flex-1 min-w-[70px] py-2.5 th-card border th-border rounded-xl text-xs font-semibold th-text-secondary hover:th-text hover:border-accent/30 transition-colors touch-target">{formatRupiah(n)}</button>
               ))}
-              <button type="button" onClick={handlePas} className="flex-1 min-w-[70px] py-2.5 bg-red-50 dark:bg-red-950/40 border th-border rounded-xl text-xs font-semibold th-accent hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors touch-target">Pas</button>
             </div>
             {nominal > 0 && (
               <div className={`rounded-xl p-4 text-center ${cukup ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800" : "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"}`}>
