@@ -51,26 +51,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const alertCount = bahanBaku.filter((b) => getStokStatus(b.stok, b.reorder_point) !== "aman").length;
 
-  const isKasir = pathname === "/kasir";
-
   return (
     <div className="flex h-dvh overflow-hidden">
-      {!isKasir && (
-        <div className="hidden md:block">
-          <Sidebar alertCount={alertCount} />
-        </div>
-      )}
+      <div className="hidden md:block">
+        <Sidebar alertCount={alertCount} />
+      </div>
 
-      <main className={`flex-1 flex flex-col overflow-hidden ${isKasir ? "" : "md:ml-16"}`}>
+      <main className="flex-1 md:ml-16 flex flex-col overflow-hidden">
         {pathname !== "/kasir" && <AlertBanner bahanBaku={bahanBaku} />}
-        <div className={`flex-1 overflow-auto ${isKasir ? "" : "pb-16 md:pb-0"}`}>{children}</div>
+        <div className="flex-1 overflow-auto pb-16 md:pb-0">{children}</div>
       </main>
 
-      {!isKasir && (
-        <div className="md:hidden">
-          <BottomNav alertCount={alertCount} />
-        </div>
-      )}
+      <div className="md:hidden">
+        <BottomNav alertCount={alertCount} />
+      </div>
     </div>
   );
 }

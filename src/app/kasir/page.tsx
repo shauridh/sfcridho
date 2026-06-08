@@ -245,7 +245,7 @@ export default function KasirPage() {
         }} />
       </div>
 
-      <div className="hidden md:block w-[42%] min-w-[320px] border-l th-border">
+      <div className="hidden md:block w-[36%] min-w-[300px] border-l th-border">
         <Cart items={cart} total={total} onUpdateQty={updateQty} onClear={clearCart} onBayar={() => setShowPayment(true)} />
       </div>
 
