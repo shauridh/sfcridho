@@ -59,7 +59,7 @@ export default function KategoriBar({ kategoriList, active, onSelect, onReorder 
             onDragOver={(e) => !isReorder && handleDragOver(e, idx)}
             onDrop={() => !isReorder && handleDrop(idx)}
             onDragEnd={handleDragEnd}
-            className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all touch-target select-none ${
+            className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all touch-target select-none shrink-0 ${
               isDragging ? "opacity-40 scale-95" : ""
             } ${isOver ? "ring-2 ring-accent ring-offset-1" : ""} ${
               isActive
@@ -70,7 +70,7 @@ export default function KategoriBar({ kategoriList, active, onSelect, onReorder 
             {!isReorder && (
               <GripVertical size={12} className="opacity-40 cursor-grab active:cursor-grabbing shrink-0" />
             )}
-            <button onClick={() => onSelect(k)} className="flex-1">
+            <button onClick={() => onSelect(k)} className="whitespace-nowrap">
               {k}
             </button>
           </div>

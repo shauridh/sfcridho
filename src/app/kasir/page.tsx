@@ -45,6 +45,7 @@ export default function KasirPage() {
   const [showCloseShift, setShowCloseShift] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showOnlineOrders, setShowOnlineOrders] = useState(false);
+  const [onlineDelivery, setOnlineDelivery] = useState(false);
   const [shiftStats, setShiftStats] = useState({ totalTransaksi: 0, totalNominal: 0 });
   const [availableAddons, setAvailableAddons] = useState<Addon[]>([]);
   const [addonModal, setAddonModal] = useState<string | null>(null);
@@ -77,6 +78,9 @@ export default function KasirPage() {
     loadKategoriOrder();
     supabase.from("addons").select("*").eq("aktif", true).order("nama").then(({ data }) => {
       if (data) setAvailableAddons(data);
+    });
+    getSettings().then((s) => {
+      setOnlineDelivery(s.online_delivery === "true");
     });
   }, []);
 
@@ -214,12 +218,14 @@ export default function KasirPage() {
           <div className="flex-1 overflow-hidden">
             <KategoriBar kategoriList={kategoriList} active={filterKategori} onSelect={setFilterKategori} onReorder={handleReorderKategori} />
           </div>
-          <button
-            onClick={() => setShowOnlineOrders(!showOnlineOrders)}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors touch-target ${showOnlineOrders ? "th-accent-bg text-white" : "th-card border th-border th-muted hover:th-text"}`}
-          >
-            <Globe size={14} /> Online
-          </button>
+          {onlineDelivery && (
+            <button
+              onClick={() => setShowOnlineOrders(!showOnlineOrders)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors touch-target ${showOnlineOrders ? "th-accent-bg text-white" : "th-card border th-border th-muted hover:th-text"}`}
+            >
+              <Globe size={14} /> Online
+            </button>
+          )}
         </div>
 
         {showOnlineOrders && (

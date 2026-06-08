@@ -197,7 +197,16 @@ export default function PengaturanPage() {
             <input type="number" value={settings.safety_days || ""} onChange={(e) => setSettings({ ...settings, safety_days: e.target.value })} className="w-full px-3 py-2.5 th-card border th-border rounded-xl text-sm th-text focus:outline-none focus:border-accent" placeholder="3" min="1" max="14" />
             <p className="text-[10px] th-muted mt-0.5">Buffer hari untuk reorder point. Stok harus diisi ulang sebelum sisa {settings.safety_days || 3} hari.</p>
           </div>
-          <button onClick={() => handleSaveSettings({ store_name: settings.store_name, ongkir: settings.ongkir || "0", safety_days: settings.safety_days || "3" })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold th-muted uppercase tracking-wider">Online Delivery</p>
+              <p className="text-[10px] th-muted">Tampilkan tombol pesanan online di kasir</p>
+            </div>
+            <button onClick={() => setSettings({ ...settings, online_delivery: settings.online_delivery === "true" ? "false" : "true" })} className={`w-12 h-6 rounded-full transition-colors ${settings.online_delivery === "true" ? "bg-success" : "th-surface border th-border"}`}>
+              <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${settings.online_delivery === "true" ? "translate-x-6" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <button onClick={() => handleSaveSettings({ store_name: settings.store_name, ongkir: settings.ongkir || "0", safety_days: settings.safety_days || "3", online_delivery: settings.online_delivery || "false" })} disabled={saving} className="px-6 py-2.5 th-accent-bg text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 touch-target">
             {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan"}
           </button>
 
