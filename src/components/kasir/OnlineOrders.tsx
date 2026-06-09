@@ -40,7 +40,7 @@ export default function OnlineOrders() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
 
   const handleConfirmAndPay = async (order: Order) => {
     const settings = await getSettings();

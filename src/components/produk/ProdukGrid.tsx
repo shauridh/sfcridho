@@ -4,6 +4,7 @@ import { Produk, Resep, BahanBaku } from "@/lib/types";
 import { formatRupiah } from "@/lib/utils";
 import { Edit3, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 
 interface Props {
   produk: Produk[];
@@ -40,8 +41,8 @@ export default function ProdukGrid({ produk, resepMap, bahanBaku, onEdit, onTogg
             }`}
           >
             {p.gambar && (
-              <div className="mb-3 -mx-4 -mt-4 rounded-t-2xl overflow-hidden h-28">
-                <img src={p.gambar} alt={p.nama} className="w-full h-full object-cover" />
+              <div className="relative mb-3 -mx-4 -mt-4 rounded-t-2xl overflow-hidden h-28">
+                <Image src={p.gambar} alt={p.nama} fill sizes="(max-width: 768px) 45vw, (max-width: 1280px) 30vw, 220px" className="object-cover" />
               </div>
             )}
             <div className="flex items-start justify-between mb-2">

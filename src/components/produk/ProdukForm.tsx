@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Produk, Resep, BahanBaku } from "@/lib/types";
 import { X, Plus, Trash2, ImagePlus } from "lucide-react";
+import Image from "next/image";
 
 interface ResepItem {
   bahan_id: string;
@@ -116,8 +117,8 @@ export default function ProdukForm({ initial, resepInitial, bahanBaku, kategoriO
             <div className="flex items-center gap-3">
               {gambar ? (
                 <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-border">
-                  <img src={gambar} alt={nama} className="w-full h-full object-cover" />
-                  <button type="button" onClick={() => setGambar(null)} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center text-xs">×</button>
+                  <Image src={gambar} alt={nama} fill sizes="80px" className="object-cover" />
+                  <button type="button" onClick={() => setGambar(null)} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center text-xs z-10">×</button>
                 </div>
               ) : (
                 <label className="w-20 h-20 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors th-muted">

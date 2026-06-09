@@ -2,6 +2,7 @@
 
 import { Produk } from "@/lib/types";
 import { formatRupiah } from "@/lib/utils";
+import Image from "next/image";
 
 interface Props {
   produk: Produk[];
@@ -40,7 +41,7 @@ export default function ProductGrid({ produk, onAdd }: Props) {
             >
               {hasImage ? (
                 <div className="relative w-full h-20 sm:h-24 bg-gray-100 dark:bg-gray-800">
-                  <img src={p.gambar!} alt={p.nama} className="w-full h-full object-cover" />
+                  <Image src={p.gambar!} alt={p.nama} fill sizes="(max-width: 640px) 45vw, 160px" className="object-cover" />
                 </div>
               ) : (
                 <div className="w-full h-20 sm:h-24 th-surface flex items-center justify-center">

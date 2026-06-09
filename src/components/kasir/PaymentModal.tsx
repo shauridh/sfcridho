@@ -127,6 +127,8 @@ return (
               {qrLoading ? (
                 <Loader2 size={32} className="animate-spin th-muted" />
               ) : qrImage ? (
+                // QR code adalah data URL dinamis — next/image tidak relevan di sini.
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={qrImage} alt="QRIS" className="w-full h-full object-contain p-2" />
               ) : (
                 <div className="p-4 text-center">
