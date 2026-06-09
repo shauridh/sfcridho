@@ -128,9 +128,12 @@ export default function KasirPage() {
   const clearCart = () => setCart([]);
 
   const handleBayar = async (bayar: number, metode: "tunai" | "qris") => {
-    const { error, transaksiId } = await prosesPembayaran(cart, total, bayar, resepMap, metode);
+    const { error, transaksiId } = await prosesPembayaran(
+      cart, total, bayar, resepMap, metode, 
+      activeShift?.id,
+      undefined
+    );
     if (!error && transaksiId) {
-      if (activeShift) await supabase.from("transaksi").update({ shift_id: activeShift.id }).eq("id", transaksiId);
       setReceipt({ items: [...cart], total, bayar, kembalian: bayar - total, transaksiId, waktu: new Date(), metode });
       setCart([]);
       setShowPayment(false);

@@ -16,7 +16,9 @@ export function useTransaksi() {
     total: number,
     bayar: number,
     resepMap: Record<string, Resep[]>,
-    metode: "tunai" | "qris" = "tunai"
+    metode: "tunai" | "qris" = "tunai",
+    shiftId?: string,
+    userId?: string
   ) => {
     setLoading(true);
 
@@ -41,15 +43,14 @@ export function useTransaksi() {
         p_total: total,
         p_bayar: bayar,
         p_items: items,
+        p_shift_id: shiftId || null,
+        p_user_id: userId || null,
+        p_metode_bayar: metode,
       });
 
       if (error) {
         console.error("Transaction error:", error);
         return { error, transaksiId: null };
-      }
-
-      if (data) {
-        await supabase.from("transaksi").update({ metode_bayar: metode }).eq("id", data);
       }
 
       return { error: null, transaksiId: data };
@@ -66,12 +67,12 @@ export function useTransaksi() {
     const start = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
     const end = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1);
 
-    const { data: transaksiData, error } = await supabase
-      .from("transaksi")
-      .select("*")
-      .gte("waktu", start.toISOString())
-      .lt("waktu", end.toISOString())
-      .order("waktu", { ascending: false });
+const { data: transaksiData, error } = await supabase
+        .from("transaksi")
+        .select("*, metode_bayar")
+        .gte("waktu", start.toISOString())
+        .lt("waktu", end.toISOString())
+        .order("waktu", { ascending: false });
 
     if (error || !transaksiData) return [];
 
