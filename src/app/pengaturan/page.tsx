@@ -6,7 +6,7 @@ import { getSettings, updateSetting, sendWhatsApp, getWATemplates, saveWATemplat
 
 import { supabase } from "@/lib/supabase";
 import { AppUser, Akun, TIPE_AKUN_OPTIONS } from "@/lib/types";
-import { Store, Users, MessageCircle, Save, Plus, Trash2, Edit3, Wallet, QrCode, Shield, FileText } from "lucide-react";
+import { Store, Users, MessageCircle, Save, Plus, Edit3, Wallet, QrCode, Shield, FileText, Power } from "lucide-react";
 
 export default function PengaturanPage() {
   const { currentUser } = useAuth();
@@ -103,11 +103,6 @@ export default function PengaturanPage() {
 
   const toggleAkunAktif = async (id: string, aktif: boolean) => {
     await supabase.from("akun").update({ aktif: !aktif }).eq("id", id);
-    await fetchData();
-  };
-
-  const hapusAkun = async (id: string) => {
-    await supabase.from("akun").delete().eq("id", id);
     await fetchData();
   };
 
@@ -259,8 +254,8 @@ export default function PengaturanPage() {
                     <td className="px-4 py-3"><span className={`text-xs font-semibold ${u.aktif ? "text-success" : "text-danger"}`}>{u.aktif ? "Aktif" : "Nonaktif"}</span></td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => { setEditingUser(u); setUserForm({ username: u.username, pin: "", nama: u.nama, role: u.role }); setShowUserForm(true); }} className="p-2 th-muted hover:th-accent"><Edit3 size={14} /></button>
-                        <button onClick={() => toggleUserAktif(u.id, u.aktif)} className="p-2 th-muted hover:text-danger"><Trash2 size={14} /></button>
+                        <button onClick={() => { setEditingUser(u); setUserForm({ username: u.username, pin: "", nama: u.nama, role: u.role }); setShowUserForm(true); }} aria-label={`Edit user ${u.username}`} className="p-2 th-muted hover:th-accent"><Edit3 size={14} /></button>
+                        <button onClick={() => toggleUserAktif(u.id, u.aktif)} aria-label={u.aktif ? `Nonaktifkan user ${u.username}` : `Aktifkan user ${u.username}`} title={u.aktif ? "Nonaktifkan" : "Aktifkan"} className={`p-2 th-muted ${u.aktif ? "hover:text-danger" : "hover:text-success"}`}><Power size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -300,8 +295,8 @@ export default function PengaturanPage() {
                     <td className="px-4 py-3"><span className={`text-xs font-semibold ${a.aktif ? "text-success" : "text-danger"}`}>{a.aktif ? "Aktif" : "Nonaktif"}</span></td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => { setEditingAkun(a); setAkunForm({ nama: a.nama, tipe: a.tipe, warna: a.warna }); setShowAkunForm(true); }} className="p-2 th-muted hover:th-accent"><Edit3 size={14} /></button>
-                        <button onClick={() => toggleAkunAktif(a.id, a.aktif)} className="p-2 th-muted hover:text-danger"><Trash2 size={14} /></button>
+                        <button onClick={() => { setEditingAkun(a); setAkunForm({ nama: a.nama, tipe: a.tipe, warna: a.warna }); setShowAkunForm(true); }} aria-label={`Edit akun ${a.nama}`} className="p-2 th-muted hover:th-accent"><Edit3 size={14} /></button>
+                        <button onClick={() => toggleAkunAktif(a.id, a.aktif)} aria-label={a.aktif ? `Nonaktifkan akun ${a.nama}` : `Aktifkan akun ${a.nama}`} title={a.aktif ? "Nonaktifkan" : "Aktifkan"} className={`p-2 th-muted ${a.aktif ? "hover:text-danger" : "hover:text-success"}`}><Power size={14} /></button>
                       </div>
                     </td>
                   </tr>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingCart, Package, UtensilsCrossed, Wallet, Settings } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, UtensilsCrossed, Wallet, Settings, Lock } from "lucide-react";
 import { useShiftAction } from "@/components/ShiftActionContext";
 import { clsx } from "@/lib/utils";
 
@@ -52,9 +52,10 @@ export default function BottomNav({ alertCount }: Props) {
       {showTutupShift && onTutupShift && (
         <button
           onClick={onTutupShift}
+          aria-label="Tutup kasir"
           className="flex flex-col items-center justify-center py-1.5 px-2 rounded-lg text-danger touch-target"
         >
-          <ShoppingCart size={20} />
+          <Lock size={20} />
           <span className="text-[9px] mt-0.5 font-medium">Tutup</span>
         </button>
       )}

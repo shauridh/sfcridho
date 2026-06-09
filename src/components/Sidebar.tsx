@@ -85,6 +85,7 @@ export default function Sidebar({ alertCount }: SidebarProps) {
         </Link>
         <button
           onClick={toggle}
+          aria-label={theme === "light" ? "Aktifkan mode gelap" : "Aktifkan mode terang"}
           className="w-10 h-10 rounded-xl flex items-center justify-center th-muted hover:th-text hover:th-surface transition-all touch-target mx-auto"
           title={theme === "light" ? "Mode Gelap" : "Mode Terang"}
         >
@@ -93,6 +94,7 @@ export default function Sidebar({ alertCount }: SidebarProps) {
         {currentUser && (
           <button
             onClick={logout}
+            aria-label={`Keluar dari akun ${currentUser.nama}`}
             className="w-10 h-10 rounded-xl flex items-center justify-center th-muted hover:text-danger hover:th-surface transition-all touch-target mx-auto"
             title={`Keluar (${currentUser.nama})`}
           >
