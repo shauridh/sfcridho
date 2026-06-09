@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useKas } from "@/hooks/useKas";
+import { useTotalSaldo } from "@/hooks/useTotalSaldo";
 import { formatRupiah, formatWaktu } from "@/lib/utils";
 import { KATEGORI_KAS, Opex, Piutang, Akun } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
-import { Plus, ArrowUpCircle, ArrowDownCircle, Trash2, ChevronLeft, ChevronRight, Calendar, Receipt, Repeat, CreditCard, TrendingDown, Wallet, CheckCircle2, Edit3 } from "lucide-react";
+import { Plus, ArrowUpCircle, ArrowDownCircle, Trash2, ChevronLeft, ChevronRight, Calendar, Receipt, Repeat, CreditCard, TrendingDown, Wallet, CheckCircle2, Edit3, Info } from "lucide-react";
 
 type Tab = "overview" | "kas" | "opex" | "piutang";
 
@@ -13,7 +14,9 @@ export default function KasPage() {
   const [tab, setTab] = useState<Tab>("overview");
   const [date, setDate] = useState(new Date());
   const { kasList, loading, totalMasuk, totalKeluar, selisih, totalKasAll, tambahKas, hapusKas, refresh } = useKas();
+  const { breakdown, loading: loadingSaldo } = useTotalSaldo();
   const [showForm, setShowForm] = useState(false);
+  const [showSaldoDetail, setShowSaldoDetail] = useState(false);
   const [tipe, setTipe] = useState<"masuk" | "keluar">("keluar");
   const [nominal, setNominal] = useState("");
   const [keterangan, setKeterangan] = useState("");
@@ -171,14 +174,19 @@ export default function KasPage() {
         })}
       </div>
 
-      {tab === "overview" && (
+{tab === "overview" && (
         <div className="space-y-6">
           <div className="th-card border th-border rounded-2xl p-4 md:p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Wallet size={18} className="th-accent" />
               <h2 className="text-sm md:text-base font-bold th-text">Dashboard Keuangan</h2>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+              <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-950/30 transition-colors" onClick={() => setShowSaldoDetail(true)}>
+                <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase mb-1">Total Saldo</p>
+                <p className="text-xl font-bold text-purple-700 dark:text-purple-300">{loadingSaldo ? "..." : breakdown.totalFormatted}</p>
+                <p className="text-[10px] text-purple-500 mt-1 flex items-center gap-1">Semua sumber <Info size={10} className="opacity-50" /></p>
+              </div>
               <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
                 <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase mb-1">Total Kas</p>
                 <p className="text-xl font-bold text-green-700 dark:text-green-300">{formatRupiah(totalKasAll)}</p>
@@ -234,6 +242,39 @@ export default function KasPage() {
               <div className="flex justify-between py-2 pt-3 border-t-2 th-border">
                 <span className="font-bold th-text">Sisa Bersih</span>
                 <span className={`text-lg font-bold ${sisaBersih >= 0 ? "text-success" : "text-danger"}`}>{formatRupiah(sisaBersih)}</span>
+              </div>
+</div>
+          </div>
+        </div>
+      )}
+
+      {showSaldoDetail && (
+        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={() => setShowSaldoDetail(false)}>
+          <div className="th-card border th-border rounded-2xl w-full max-w-sm shadow-xl p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-4">
+              <Wallet size={18} className="th-accent" />
+              <h3 className="text-base font-bold th-text">Rincian Total Saldo</h3>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">💰 Drawer (Shift Aktif)</span>
+                <span className="font-semibold th-text">{breakdown.drawerFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">+ Kas Masuk (Manual)</span>
+                <span className="font-semibold text-success">{breakdown.kasMasukFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">− Kas Keluar (Manual)</span>
+                <span className="font-semibold text-danger">-{breakdown.kasKeluarFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">🏦 Bank / E-Wallet</span>
+                <span className="font-semibold th-text">{formatRupiah(breakdown.akunBank + breakdown.akunEwallet + breakdown.akunKasFisik)}</span>
+              </div>
+              <div className="flex justify-between py-3 border-t-2 th-border">
+                <span className="font-bold th-text">Total Saldo</span>
+                <span className="text-lg font-bold th-accent">{breakdown.totalFormatted}</span>
               </div>
             </div>
           </div>

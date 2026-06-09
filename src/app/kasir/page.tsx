@@ -16,9 +16,10 @@ import { ShiftOpenModal, ShiftCloseModal } from "@/components/kasir/ShiftModals"
 import { CartItem, Addon } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
+import { useTotalSaldo } from "@/hooks/useTotalSaldo";
 import { getSettings } from "@/lib/whatsapp";
 import { sendWhatsApp, formatLaporanWA } from "@/lib/whatsapp";
-import { ShoppingBag, Globe, X } from "lucide-react";
+import { ShoppingBag, Globe, X, Info, Wallet } from "lucide-react";
 
 interface ReceiptData {
   items: CartItem[];
@@ -46,15 +47,18 @@ export default function KasirPage() {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showOnlineOrders, setShowOnlineOrders] = useState(false);
   const [onlineDelivery, setOnlineDelivery] = useState(false);
-  const [shiftStats, setShiftStats] = useState({ totalTransaksi: 0, totalNominal: 0 });
+  const [shiftStats, setShiftStats] = useState({ totalTransaksi: 0, totalNominal: 0, totalQris: 0 });
   const [availableAddons, setAvailableAddons] = useState<Addon[]>([]);
   const [addonModal, setAddonModal] = useState<string | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [showSaldoDetail, setShowSaldoDetail] = useState(false);
+  const { breakdown } = useTotalSaldo();
 
   const fetchShiftStats = useCallback(async () => {
     if (!activeShift) return;
-    const { data } = await supabase.from("transaksi").select("total").eq("shift_id", activeShift.id);
-    setShiftStats({ totalTransaksi: data?.length || 0, totalNominal: data?.reduce((s, t) => s + t.total, 0) || 0 });
+    const { data } = await supabase.from("transaksi").select("total, metode_bayar").eq("shift_id", activeShift.id);
+    const totalQris = (data || []).filter((t) => (t as any).metode_bayar === "qris").reduce((s, t) => s + t.total, 0);
+    setShiftStats({ totalTransaksi: data?.length || 0, totalNominal: data?.reduce((s, t) => s + t.total, 0) || 0, totalQris });
   }, [activeShift]);
 
   useEffect(() => { fetchShiftStats(); }, [fetchShiftStats]);
@@ -143,19 +147,28 @@ export default function KasirPage() {
     if (rows.length > 0) await supabase.from("kategori_order").insert(rows);
   };
 
-  const handleCloseShift = async (uangAmbil: number) => {
+  const handleCloseShift = async (uangAmbil: number, pengeluaran: number, omsetTotal: number) => {
     const shiftId = activeShift?.id;
     const uangBuka = activeShift?.uang_buka || 0;
     const res = await tutupShift(uangAmbil);
     if (!res.error) {
       setShowCloseShift(false);
 
-      if (uangAmbil > 0 && shiftId) {
+      if (omsetTotal > 0 && shiftId) {
         await supabase.from("kas").insert({
           tipe: "masuk",
-          nominal: uangAmbil,
-          keterangan: `Penarikan kasir — shift ${shiftId.slice(0, 8)}`,
-          kategori: "Penarikan Kasir",
+          nominal: omsetTotal,
+          keterangan: `Omset harian — ${new Date().toLocaleDateString("id-ID")}`,
+          kategori: "Operasional",
+        });
+      }
+
+      if (pengeluaran > 0) {
+        await supabase.from("kas").insert({
+          tipe: "keluar",
+          nominal: pengeluaran,
+          keterangan: `Pengeluaran hari ini — ${new Date().toLocaleDateString("id-ID")}`,
+          kategori: "Operasional",
         });
       }
 
@@ -275,6 +288,7 @@ export default function KasirPage() {
           shift={activeShift}
           totalTransaksiHariIni={shiftStats.totalTransaksi}
           totalNominalHariIni={shiftStats.totalNominal}
+          totalQrisHariIni={shiftStats.totalQris}
           onTutup={handleCloseShift}
           onClose={() => setShowCloseShift(false)}
           loading={false}
@@ -325,6 +339,39 @@ export default function KasirPage() {
           </div>
         );
       })()}
+      
+      {showSaldoDetail && (
+        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={() => setShowSaldoDetail(false)}>
+          <div className="th-card border th-border rounded-2xl w-full max-w-sm shadow-xl p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-4">
+              <Wallet size={18} className="th-accent" />
+              <h3 className="text-base font-bold th-text">Rincian Total Saldo</h3>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">💰 Drawer (Shift Aktif)</span>
+                <span className="font-semibold th-text">{breakdown.drawerFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">+ Kas Masuk (Manual)</span>
+                <span className="font-semibold text-success">{breakdown.kasMasukFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">− Kas Keluar (Manual)</span>
+                <span className="font-semibold text-danger">-{breakdown.kasKeluarFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">🏦 Bank / E-Wallet</span>
+                <span className="font-semibold th-text">{formatRupiah(breakdown.akunBank + breakdown.akunEwallet + breakdown.akunKasFisik)}</span>
+              </div>
+              <div className="flex justify-between py-3 border-t-2 th-border">
+                <span className="font-bold th-text">Total Saldo</span>
+                <span className="text-lg font-bold th-accent">{breakdown.totalFormatted}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

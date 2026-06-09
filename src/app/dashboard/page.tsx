@@ -3,21 +3,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTransaksi } from "@/hooks/useTransaksi";
 import { useKas } from "@/hooks/useKas";
+import { useTotalSaldo } from "@/hooks/useTotalSaldo";
 import SummaryCards from "@/components/laporan/SummaryCards";
 import HourlyChart from "@/components/laporan/HourlyChart";
 import TransactionList from "@/components/laporan/TransactionList";
 import BestSellers from "@/components/laporan/BestSellers";
 import WeeklyTrend from "@/components/laporan/WeeklyTrend";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Calendar, ArrowUpCircle, ArrowDownCircle, Banknote, QrCode, Wallet } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, ArrowUpCircle, ArrowDownCircle, Banknote, QrCode, Wallet, Info } from "lucide-react";
 
 export default function DashboardPage() {
   const { getLaporanHariIni, getWeeklyTrend } = useTransaksi();
   const { totalMasuk, totalKeluar, selisih, refresh: refreshKas } = useKas();
+  const { breakdown, loading: loadingSaldo } = useTotalSaldo();
   const [date, setDate] = useState(new Date());
   const [data, setData] = useState<any>(null);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSaldoDetail, setShowSaldoDetail] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -64,7 +67,15 @@ export default function DashboardPage() {
           <Wallet size={16} className="th-accent" />
           <h3 className="text-sm font-bold th-text">Ringkasan Keuangan</h3>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+          <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-3 border border-purple-200 dark:border-purple-800 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-950/30 transition-colors" onClick={() => setShowSaldoDetail(true)}>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Wallet size={14} className="text-purple-600" />
+              <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 uppercase">Total Saldo</span>
+            </div>
+            <p className="text-lg font-bold text-purple-700 dark:text-purple-300">{loadingSaldo ? "..." : breakdown.totalFormatted}</p>
+            <p className="text-[10px] text-purple-500 flex items-center gap-1">Semua sumber <Info size={10} className="opacity-50" /></p>
+          </div>
           <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-3 border border-green-200 dark:border-green-800">
             <div className="flex items-center gap-1.5 mb-1">
               <ArrowUpCircle size={14} className="text-green-600" />
@@ -105,6 +116,39 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {showSaldoDetail && (
+        <div className="fixed inset-0 th-overlay flex items-center justify-center z-50 p-4" onClick={() => setShowSaldoDetail(false)}>
+          <div className="th-card border th-border rounded-2xl w-full max-w-sm shadow-xl p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-4">
+              <Wallet size={18} className="th-accent" />
+              <h3 className="text-base font-bold th-text">Rincian Total Saldo</h3>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">Drawer (Shift Aktif)</span>
+                <span className="font-semibold th-text">{breakdown.drawerFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">Kas Masuk (Manual)</span>
+                <span className="font-semibold text-success">{breakdown.kasMasukFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">Kas Keluar (Manual)</span>
+                <span className="font-semibold text-danger">-{breakdown.kasKeluarFormatted}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b th-border/30">
+                <span className="th-text-secondary">Bank / E-Wallet</span>
+                <span className="font-semibold th-text">{formatRupiah(breakdown.akunBank + breakdown.akunEwallet + breakdown.akunKasFisik)}</span>
+              </div>
+              <div className="flex justify-between py-3 border-t-2 th-border">
+                <span className="font-bold th-text">Total Saldo</span>
+                <span className="text-lg font-bold th-accent">{breakdown.totalFormatted}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <HourlyChart data={data.hourlyData} />
 

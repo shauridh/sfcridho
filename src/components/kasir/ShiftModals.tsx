@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatRupiah } from "@/lib/utils";
 import { Shift } from "@/lib/types";
-import { Lock, Unlock, X, ArrowLeft } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { Lock, Unlock, X, ArrowLeft, ArrowDownCircle } from "lucide-react";
 
 interface OpenProps {
   onBuka: (uangBuka: number) => Promise<{ error: any }>;
@@ -71,23 +72,27 @@ interface CloseProps {
   shift: Shift;
   totalTransaksiHariIni: number;
   totalNominalHariIni: number;
-  onTutup: (uangAmbil: number) => Promise<{ error: any }>;
+  totalQrisHariIni: number;
+  onTutup: (uangAmbil: number, pengeluaran: number, omsetQris: number) => Promise<{ error: any }>;
   onClose: () => void;
   loading: boolean;
 }
 
-export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHariIni, onTutup, onClose, loading }: CloseProps) {
+export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHariIni, totalQrisHariIni, onTutup, onClose, loading }: CloseProps) {
   const [uangAmbil, setUangAmbil] = useState("");
+  const [pengeluaran, setPengeluaran] = useState("");
   const [error, setError] = useState("");
 
   const uangDiDrawer = shift.uang_buka + totalNominalHariIni;
   const ambil = parseInt(uangAmbil.replace(/[^0-9]/g, ""), 10) || 0;
-  const sisaDrawer = uangDiDrawer - ambil;
+  const pengeluaranVal = parseInt(pengeluaran.replace(/[^0-9]/g, ""), 10) || 0;
+  const omsetTotal = ambil + totalQrisHariIni;
+  const sisaDrawer = uangDiDrawer - ambil - pengeluaranVal;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (ambil < 0 || ambil > uangDiDrawer) { setError("Nominal tidak valid"); return; }
-    const { error: err } = await onTutup(ambil);
+    const { error: err } = await onTutup(ambil, pengeluaranVal, omsetTotal);
     if (err) setError("Gagal menutup shift");
   };
 
@@ -122,21 +127,44 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
           </div>
 
           <div>
+            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Pengeluaran Hari Ini (Rp)</label>
+            <input type="text" inputMode="numeric" value={pengeluaran} onChange={(e) => { setPengeluaran(e.target.value); setError(""); }} className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
+            <p className="text-xs th-muted mt-1">Belanja kebutuhan dari drawer</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">QRIS Masuk (Otomatis)</label>
+            <div className="w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30 border th-border rounded-xl text-xl font-bold text-blue-700 dark:text-blue-300 text-center">
+              {formatRupiah(totalQrisHariIni)}
+            </div>
+            <p className="text-xs th-muted mt-1">Akan masuk ke akun Seabank otomatis</p>
+          </div>
+
+          <div>
             <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Uang yang Diambil (Rp)</label>
             <input type="text" inputMode="numeric" value={uangAmbil} onChange={(e) => { setUangAmbil(e.target.value); setError(""); }} autoFocus className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
           </div>
 
-          {ambil > 0 && (
+          {omsetTotal > 0 && (
+            <div className="bg-green-50 dark:bg-green-950/30 border th-border rounded-xl p-3 text-center">
+              <p className="text-xs th-muted">Omset Harian (Auto)</p>
+              <p className="text-xl font-bold text-success">{formatRupiah(omsetTotal)}</p>
+              <p className="text-[10px] text-green-500 mt-1">{formatRupiah(ambil)} + {formatRupiah(totalQrisHariIni)} (QRIS)</p>
+            </div>
+          )}
+
+          {(ambil > 0 || pengeluaranVal > 0) && (
             <div className="bg-red-50 dark:bg-red-950/30 border th-border rounded-xl p-3 text-center">
               <p className="text-xs th-muted">Sisa di Drawer</p>
               <p className="text-xl font-bold th-accent">{formatRupiah(sisaDrawer)}</p>
+              <p className="text-[10px] text-red-500 mt-1">Untuk kembalian besok</p>
             </div>
           )}
 
           {error && <p className="text-sm text-danger text-center">{error}</p>}
 
           <div className="flex gap-3">
-            <button type="button"  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
             <button type="submit" disabled={loading} className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50 touch-target">
               {loading ? "Menutup..." : "Tutup Kasir"}
             </button>
