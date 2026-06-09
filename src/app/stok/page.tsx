@@ -10,6 +10,7 @@ import OpnameModal from "@/components/stok/OpnameModal";
 import ForecastBanner from "@/components/stok/ForecastBanner";
 import KategoriManager from "@/components/KategoriManager";
 import BulkInputModal, { Column } from "@/components/BulkInputModal";
+import LoadingScreen from "@/components/LoadingScreen";
 import { BahanBaku, SATUAN_OPTIONS } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
@@ -100,7 +101,7 @@ export default function StokPage() {
   const today = new Date();
 
   if (loading) {
-    return <div className="flex items-center justify-center h-full"><div className="th-muted">Memuat data...</div></div>;
+    return <LoadingScreen label="Memuat data..." />;
   }
 
   return (

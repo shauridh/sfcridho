@@ -9,6 +9,7 @@ import HourlyChart from "@/components/laporan/HourlyChart";
 import TransactionList from "@/components/laporan/TransactionList";
 import BestSellers from "@/components/laporan/BestSellers";
 import WeeklyTrend from "@/components/laporan/WeeklyTrend";
+import LoadingScreen from "@/components/LoadingScreen";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Calendar, ArrowUpCircle, ArrowDownCircle, Banknote, QrCode, Wallet, Info } from "lucide-react";
 
@@ -38,7 +39,7 @@ export default function DashboardPage() {
   const isToday = date.toDateString() === new Date().toDateString();
 
   if (loading || !data) {
-    return <div className="flex items-center justify-center h-full"><div className="th-muted">Memuat dashboard...</div></div>;
+    return <LoadingScreen label="Memuat dashboard..." />;
   }
 
   return (

@@ -7,6 +7,7 @@ import { formatRupiah, formatWaktu } from "@/lib/utils";
 import { KATEGORI_KAS, Opex, Piutang, Akun } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { Plus, ArrowUpCircle, ArrowDownCircle, Trash2, ChevronLeft, ChevronRight, Calendar, Receipt, Repeat, CreditCard, TrendingDown, Wallet, CheckCircle2, Edit3, Info } from "lucide-react";
+import LoadingScreen from "@/components/LoadingScreen";
 
 type Tab = "overview" | "kas" | "opex" | "piutang";
 
@@ -131,7 +132,7 @@ export default function KasPage() {
   const totalPiutangBelum = piutangList.filter((p) => p.tipe === "piutang" && p.status === "belum").reduce((s, p) => s + p.nominal, 0);
   const sisaBersih = totalKasAll - totalOpex - totalCicilan;
 
-  if (loading) return <div className="flex items-center justify-center h-full"><div className="th-muted">Memuat...</div></div>;
+  if (loading) return <LoadingScreen />;
 
   const tabs = [
     { key: "overview" as Tab, label: "Ringkasan", icon: Wallet },

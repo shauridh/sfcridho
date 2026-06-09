@@ -12,6 +12,7 @@ import PaymentModal from "@/components/kasir/PaymentModal";
 import ReceiptStruk from "@/components/kasir/ReceiptStruk";
 import KategoriBar from "@/components/kasir/KategoriBar";
 import OnlineOrders from "@/components/kasir/OnlineOrders";
+import LoadingScreen from "@/components/LoadingScreen";
 import { ShiftOpenModal, ShiftCloseModal } from "@/components/kasir/ShiftModals";
 import { CartItem, Addon } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
@@ -220,7 +221,7 @@ kasMasuk: 0,
   };
 
   if (loadingProduk || loadingShift) {
-    return <div className="flex items-center justify-center h-full"><div className="th-muted">Memuat data...</div></div>;
+    return <LoadingScreen label="Memuat data..." />;
   }
 
   if (!isOpen) {

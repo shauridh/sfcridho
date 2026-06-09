@@ -10,6 +10,7 @@ import ProdukForm from "@/components/produk/ProdukForm";
 import KategoriManager from "@/components/KategoriManager";
 import AddonManager from "@/components/AddonManager";
 import BulkInputModal, { Column } from "@/components/BulkInputModal";
+import LoadingScreen from "@/components/LoadingScreen";
 import { Produk } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { Plus, Search, Layers, Tag, Puzzle } from "lucide-react";
@@ -53,7 +54,7 @@ export default function ProdukPage() {
   });
 
   if (loading) {
-    return <div className="flex items-center justify-center h-full"><div className="th-muted">Memuat data...</div></div>;
+    return <LoadingScreen label="Memuat data..." />;
   }
 
   return (
