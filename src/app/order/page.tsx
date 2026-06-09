@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
 import { Plus, Minus, Trash2, ShoppingCart, Send, CheckCircle, MapPin, ChevronDown, ChevronRight, X } from "lucide-react";
-import { sendWhatsApp, getSettings, getWATemplates, fillTemplate } from "@/lib/whatsapp";
+import { sendWhatsApp, getPublicSettings, getWATemplates, fillTemplate } from "@/lib/whatsapp";
 
 interface MenuItem {
   id: string;
@@ -51,7 +51,7 @@ export default function OrderPage() {
     supabase.from("addons").select("id, nama, harga").eq("aktif", true).order("nama").then(({ data }) => {
       if (data) setAvailableAddons(data);
     });
-    getSettings().then((s) => {
+    getPublicSettings().then((s) => {
       setOngkir(parseInt(s.ongkir) || 0);
     });
   }, []);
@@ -133,7 +133,7 @@ export default function OrderPage() {
       });
       if (err) throw err;
 
-      const settings = await getSettings();
+      const settings = await getPublicSettings();
       const templates = await getWATemplates();
       const storeName = settings.store_name || "Sabana FC";
       const itemsList = cart.map((c) => `${c.nama} x${c.qty}`).join(", ");

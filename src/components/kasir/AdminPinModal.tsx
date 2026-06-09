@@ -19,8 +19,8 @@ export default function AdminPinModal({ title, message, onConfirm, onClose }: Pr
     if (pin.length < 4) { setError("Masukkan PIN 4 digit"); return; }
     try {
       const { supabase } = await import("@/lib/supabase");
-      const { data } = await supabase.rpc("verify_login", { p_username: "admin", p_pin: pin });
-      if (!data || data.length === 0) {
+      const { data } = await supabase.rpc("verify_owner_pin", { p_pin: pin });
+      if (!data) {
         setError("PIN salah");
         return;
       }
@@ -54,7 +54,7 @@ export default function AdminPinModal({ title, message, onConfirm, onClose }: Pr
           </div>
           {error && <p className="text-sm text-danger text-center">{error}</p>}
           <div className="flex gap-3">
-            <button type="button"  className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 border th-border rounded-xl text-sm font-medium th-muted touch-target">Batal</button>
             <button type="submit" className="flex-1 py-3 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 touch-target">Konfirmasi</button>
           </div>
         </form>

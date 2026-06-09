@@ -57,8 +57,9 @@ export default function KasirPage() {
   const fetchShiftStats = useCallback(async () => {
     if (!activeShift) return;
     const { data } = await supabase.from("transaksi").select("total, metode_bayar").eq("shift_id", activeShift.id);
-    const totalQris = (data || []).filter((t) => (t as any).metode_bayar === "qris").reduce((s, t) => s + t.total, 0);
-    setShiftStats({ totalTransaksi: data?.length || 0, totalNominal: data?.reduce((s, t) => s + t.total, 0) || 0, totalQris });
+    const rows = (data || []) as { total: number; metode_bayar: string | null }[];
+    const totalQris = rows.filter((t) => t.metode_bayar === "qris").reduce((s, t) => s + t.total, 0);
+    setShiftStats({ totalTransaksi: rows.length, totalNominal: rows.reduce((s, t) => s + t.total, 0), totalQris });
   }, [activeShift]);
 
   useEffect(() => { fetchShiftStats(); }, [fetchShiftStats]);

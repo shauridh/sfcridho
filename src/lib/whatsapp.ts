@@ -68,33 +68,27 @@ export async function getSettings(): Promise<Record<string, string>> {
   return map;
 }
 
+// Untuk halaman publik (/order): hanya key non-sensitif (tanpa wa_api_key).
+export async function getPublicSettings(): Promise<Record<string, string>> {
+  const { data } = await supabase.rpc("get_public_settings");
+  if (!data) return {};
+  const map: Record<string, string> = {};
+  (data as { key: string; value: string }[]).forEach((r) => (map[r.key] = r.value));
+  return map;
+}
+
 export async function updateSetting(key: string, value: string) {
   return supabase.from("settings").upsert({ key, value }, { onConflict: "key" });
 }
 
 export async function sendWhatsApp(message: string, to?: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const settings = await getSettings();
-    const apiKey = settings.wa_api_key;
-    const phone = settings.wa_phone;
-    const sender = settings.wa_sender || phone;
-    const storeName = settings.store_name || "Sabana FC";
-
-    if (!apiKey || !phone) {
-      return { success: false, error: "WhatsApp belum dikonfigurasi" };
-    }
-
-    const targetPhone = to || phone;
-
+    // Kredensial & nomor default di-resolve di server (/api/whatsapp).
+    // Browser hanya boleh mengirim pesan + nomor tujuan, tidak pernah API key.
     const resp = await fetch("/api/whatsapp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        api_key: apiKey,
-        sender: sender,
-        number: targetPhone,
-        message: message,
-      }),
+      body: JSON.stringify({ number: to || "default", message }),
     });
 
     if (!resp.ok) {
@@ -110,25 +104,18 @@ export async function sendWhatsApp(message: string, to?: string): Promise<{ succ
 
 export async function sendWhatsAppImage(base64Image: string, to: string, caption?: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const settings = await getSettings();
-    const apiKey = settings.wa_api_key;
-    const sender = settings.wa_sender || settings.wa_phone;
-    const storeName = settings.store_name || "Sabana FC";
-
-    if (!apiKey || !to) {
-      return { success: false, error: "WhatsApp belum dikonfigurasi atau nomor tujuan kosong" };
+    if (!to) {
+      return { success: false, error: "Nomor tujuan kosong" };
     }
 
     const resp = await fetch("/api/whatsapp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        api_key: apiKey,
-        sender: sender,
         number: to,
         type: "image",
         image: base64Image,
-        caption: caption || `Sent via ${storeName}`,
+        caption: caption || "",
       }),
     });
 

@@ -69,7 +69,7 @@ export function useTransaksi() {
 
 const { data: transaksiData, error } = await supabase
         .from("transaksi")
-        .select("*, metode_bayar")
+        .select("*")
         .gte("waktu", start.toISOString())
         .lt("waktu", end.toISOString())
         .order("waktu", { ascending: false });
@@ -131,8 +131,8 @@ const { data: transaksiData, error } = await supabase
         .map(([jam, total]) => ({ jam: parseInt(jam), total, label: `${jam}:00` }))
         .sort((a, b) => b.total - a.total);
 
-      const tunaiList = transaksiList.filter((t) => (t as any).metode_bayar !== "qris");
-      const qrisList = transaksiList.filter((t) => (t as any).metode_bayar === "qris");
+      const tunaiList = transaksiList.filter((t) => t.metode_bayar !== "qris");
+      const qrisList = transaksiList.filter((t) => t.metode_bayar === "qris");
       const metodeBayar = {
         tunai: { count: tunaiList.length, total: tunaiList.reduce((s, t) => s + t.total, 0) },
         qris: { count: qrisList.length, total: qrisList.reduce((s, t) => s + t.total, 0) },

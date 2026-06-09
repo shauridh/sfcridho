@@ -209,7 +209,7 @@ export default function StokPage() {
             {ayam && <div className="flex justify-between"><span className="th-text-secondary">🍗 {ayam.nama}</span><span className="font-semibold th-text">−{batch * 3} pak ({batch * 3 * ayam.isi_per_pak} {ayam.sat_dasar})</span></div>}
             {tepung && <div className="flex justify-between"><span className="th-text-secondary">📦 {tepung.nama}</span><span className="font-semibold th-text">−{batch} kg</span></div>}
             {minyak && <div className="flex justify-between"><span className="th-text-secondary">🛢️ {minyak.nama}</span><span className="font-semibold th-text">−2 liter</span></div>}
-            {!ayam && <p className="text-xs text-danger">⚠️ Bahan kategori "Ayam" belum ada</p>}
+            {!ayam && <p className="text-xs text-danger">⚠️ Bahan kategori &quot;Ayam&quot; belum ada</p>}
           </div>
         )}
         {gorengError && <p className="text-xs text-danger mt-2">{gorengError}</p>}

@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sabana FC POS
 
-## Getting Started
+Sistem Point of Sale (POS) dan manajemen bahan baku untuk Sabana Fried Chicken. Mendukung transaksi kasir, manajemen stok dengan forecasting, kas/keuangan, shift kasir, order online via WhatsApp, dan laporan harian. Dibangun sebagai PWA sehingga bisa di-install di HP.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 14** (App Router) + React 18 + TypeScript
+- **Supabase** (PostgreSQL, RPC, Row Level Security)
+- **Tailwind CSS** untuk styling
+- **PWA** via `@ducanh2912/next-pwa`
+- **recharts** (grafik), **jsqr** + **qrcode** (QRIS), **lucide-react** (ikon)
+
+## Prasyarat
+
+- Node.js 20+
+- Project Supabase (gratis cukup)
+
+## Environment Variables
+
+Buat file `.env.local` di root:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+
+# WAJIB di server (Vercel/host) — dipakai API routes untuk operasi privileged
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> `SUPABASE_SERVICE_ROLE_KEY` jangan diberi prefix `NEXT_PUBLIC_`. Key ini hanya untuk server (API routes), tidak boleh sampai ke browser. Jika tidak diset, API routes jatuh ke anon key dan kehilangan privilege.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setup Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Jalankan file di `supabase/migrations/` secara berurutan (001 → 027) lewat Supabase SQL Editor. Belum ada tooling migrasi otomatis, jadi urutan harus dijaga manual.
 
-## Learn More
+Migration penting:
 
-To learn more about Next.js, take a look at the following resources:
+- `001`–`024`: schema dasar, transaksi, stok, kas, order, dll.
+- `025_secure_pins.sql`: hashing PIN (bcrypt) + kunci akses `app_users`.
+- `026_transaction_integrity.sql`: validasi stok + hapus overload fungsi lama.
+- `027_public_settings.sql`: whitelist setting untuk halaman publik `/order`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Setelah migration 025, user default punya PIN yang sudah di-hash. User awal (lihat migration 004): `admin` / `kasir1` dengan PIN `1234` — **ganti segera** lewat menu Pengaturan.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Menjalankan
 
-## Deploy on Vercel
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # build produksi
+npm run start    # jalankan hasil build
+npm run lint     # ESLint
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Struktur
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/            # routes (App Router)
+    api/          # API routes (whatsapp proxy, orders)
+    kasir/        # halaman kasir / POS
+    stok/         # manajemen bahan baku + forecasting
+    kas/          # kas, opex, piutang/hutang
+    order/        # halaman publik order online (tanpa login)
+    pengaturan/   # konfigurasi toko, user, WA, QRIS, PIN
+    dashboard/    # ringkasan & laporan
+  components/     # komponen UI (modal, form, nav, dll.)
+  hooks/          # data hooks (useStok, useTransaksi, useKas, dll.)
+  lib/            # supabase client, types, utils, whatsapp, qris
+supabase/
+  migrations/     # SQL migrations (jalankan berurutan)
+```
+
+## Catatan Keamanan
+
+- PIN di-hash dengan bcrypt (pgcrypto). Semua operasi tulis ke `app_users` lewat RPC `SECURITY DEFINER`, bukan akses tabel langsung.
+- Kredensial WhatsApp (`wa_api_key`) di-resolve server-side di `/api/whatsapp` dan tidak pernah dikirim dari browser.
+- Halaman publik `/order` hanya membaca setting non-sensitif via `get_public_settings()`.
+
+**Keterbatasan saat ini:** aplikasi belum memakai Supabase Auth sungguhan — sebagian besar tabel masih bisa diakses memakai anon key. Untuk produksi dengan data sensitif, migrasikan ke Supabase Auth dan terapkan RLS berbasis `auth.uid()`. Lihat `TODO.md`.
+
+## Deploy
+
+Deploy ke Vercel. Set semua environment variable di atas (termasuk `SUPABASE_SERVICE_ROLE_KEY`) di dashboard Vercel sebelum deploy.

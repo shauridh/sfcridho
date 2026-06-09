@@ -35,7 +35,7 @@ export default function PengaturanPage() {
   const fetchData = useCallback(async () => {
     const s = await getSettings();
     setSettings(s);
-    const { data } = await supabase.from("app_users").select("*").order("created_at");
+    const { data } = await supabase.from("app_users").select("id, username, nama, role, aktif, created_at").order("created_at");
     if (data) setUsers(data);
     const { data: akunData } = await supabase.from("akun").select("*").order("created_at");
     if (akunData) setAkunList(akunData);
@@ -61,18 +61,21 @@ export default function PengaturanPage() {
     if (!userForm.username || !userForm.pin || !userForm.nama) return;
     setSaving(true);
     if (editingUser) {
-      await supabase.from("app_users").update({
-        username: userForm.username,
-        pin_hash: userForm.pin,
-        nama: userForm.nama,
-        role: userForm.role,
-      }).eq("id", editingUser.id);
+      await supabase.rpc("app_update_user", {
+        p_id: editingUser.id,
+        p_username: userForm.username,
+        p_nama: userForm.nama,
+        p_role: userForm.role,
+      });
+      if (userForm.pin) {
+        await supabase.rpc("app_set_pin", { p_id: editingUser.id, p_pin: userForm.pin });
+      }
     } else {
-      await supabase.from("app_users").insert({
-        username: userForm.username,
-        pin_hash: userForm.pin,
-        nama: userForm.nama,
-        role: userForm.role,
+      await supabase.rpc("app_create_user", {
+        p_username: userForm.username,
+        p_pin: userForm.pin,
+        p_nama: userForm.nama,
+        p_role: userForm.role,
       });
     }
     setShowUserForm(false);
@@ -83,7 +86,7 @@ export default function PengaturanPage() {
   };
 
   const toggleUserAktif = async (id: string, aktif: boolean) => {
-    await supabase.from("app_users").update({ aktif: !aktif }).eq("id", id);
+    await supabase.rpc("app_set_user_aktif", { p_id: id, p_aktif: !aktif });
     await fetchData();
   };
 
@@ -363,7 +366,7 @@ export default function PengaturanPage() {
           <button onClick={async () => {
             if (newPin.length < 4 || !currentUser) return;
             setSaving(true);
-            await supabase.from("app_users").update({ pin_hash: newPin }).eq("id", currentUser.id);
+            await supabase.rpc("app_set_pin", { p_id: currentUser.id, p_pin: newPin });
             setNewPin("");
             setPinSaved(true);
             setTimeout(() => setPinSaved(false), 3000);
