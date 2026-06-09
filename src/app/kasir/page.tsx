@@ -147,21 +147,11 @@ export default function KasirPage() {
     if (rows.length > 0) await supabase.from("kategori_order").insert(rows);
   };
 
-  const handleCloseShift = async (uangAmbil: number, pengeluaran: number, omsetTotal: number) => {
+  const handleCloseShift = async (uangAmbil: number, pengeluaran: number, totalQris: number) => {
     const shiftId = activeShift?.id;
-    const uangBuka = activeShift?.uang_buka || 0;
     const res = await tutupShift(uangAmbil);
     if (!res.error) {
       setShowCloseShift(false);
-
-      if (omsetTotal > 0 && shiftId) {
-        await supabase.from("kas").insert({
-          tipe: "masuk",
-          nominal: omsetTotal,
-          keterangan: `Omset harian — ${new Date().toLocaleDateString("id-ID")}`,
-          kategori: "Operasional",
-        });
-      }
 
       if (pengeluaran > 0) {
         await supabase.from("kas").insert({
@@ -169,6 +159,15 @@ export default function KasirPage() {
           nominal: pengeluaran,
           keterangan: `Pengeluaran hari ini — ${new Date().toLocaleDateString("id-ID")}`,
           kategori: "Operasional",
+        });
+      }
+
+      if (uangAmbil > 0) {
+        await supabase.from("kas").insert({
+          tipe: "keluar",
+          nominal: uangAmbil,
+          keterangan: `Penarikan kasir — ${new Date().toLocaleDateString("id-ID")}`,
+          kategori: "Penarikan Kasir",
         });
       }
 
@@ -196,10 +195,10 @@ export default function KasirPage() {
             jumlahTransaksi: laporan.jumlahTransaksi,
             rataRata: laporan.rataRata,
             bestSellers: laporan.bestSellersList || [],
-            kasMasuk: 0,
-            kasKeluar: 0,
-            metodeBayar: (laporan as any).metodeBayar,
-            shiftInfo: shiftId ? { uangBuka, uangAmbil, uangDrawer: uangBuka + laporan.totalOmzet - uangAmbil } : undefined,
+kasMasuk: 0,
+             kasKeluar: 0,
+             metodeBayar: (laporan as any).metodeBayar,
+             shiftInfo: shiftId ? { uangBuka: activeShift?.uang_buka || 0, uangAmbil, uangDrawer: (activeShift?.uang_buka || 0) + laporan.totalOmzet - uangAmbil } : undefined,
             stokOpname,
           });
           const waResult = await sendWhatsApp(msg);

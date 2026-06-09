@@ -33,24 +33,37 @@ export function useTotalSaldo() {
     setLoading(true);
 
     const [shiftRes, kasRes, akunRes] = await Promise.all([
-      supabase.from("shift").select("id, uang_buka").eq("status", "open").order("buka_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("kas").select("tipe, nominal, tujuan_akun_id, sumber_akun_id"),
+      supabase.from("shift").select("id, uang_buka, uang_drawer, status").order("buka_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("kas").select("tipe, nominal, tujuan_akun_id, sumber_akun_id, keterangan"),
       supabase.from("akun").select("id, tipe").eq("aktif", true),
     ]);
 
     let drawerCash = 0;
     if (shiftRes.data) {
-      const { data: transaksiData } = await supabase
-        .from("transaksi")
-        .select("total, metode_bayar")
-        .eq("shift_id", shiftRes.data.id);
-      const totalTunai = (transaksiData || [])
-        .filter((t) => (t as any).metode_bayar !== "qris")
-        .reduce((s, t) => s + t.total, 0);
-      drawerCash = shiftRes.data.uang_buka + totalTunai;
+      // Untuk shift OPEN: hitung dari transaksi
+      // Untuk shift CLOSED: gunakan uang_drawer yang sudah disimpan
+      if (shiftRes.data.status === 'closed') {
+        drawerCash = shiftRes.data.uang_drawer || 0;
+      } else {
+        const { data: transaksiData } = await supabase
+          .from("transaksi")
+          .select("total, metode_bayar")
+          .eq("shift_id", shiftRes.data.id);
+        const totalTunai = (transaksiData || [])
+          .filter((t) => (t as any).metode_bayar !== "qris")
+          .reduce((s, t) => s + t.total, 0);
+        drawerCash = shiftRes.data.uang_buka + totalTunai;
+      }
     }
 
-    const kasMasuk = kasRes.data?.filter((k) => k.tipe === "masuk").reduce((s, k) => s + k.nominal, 0) || 0;
+    const kasMasuk = kasRes.data?.filter((k) => 
+      k.tipe === "masuk"
+    ).reduce((s, k) => {
+      // Exclude omset harian yang sudah tercatat di transaksi
+      if (k.keterangan?.includes("Omset harian")) return s;
+      return s + k.nominal;
+    }, 0) || 0;
+    
     const kasKeluar = kasRes.data?.filter((k) => k.tipe === "keluar").reduce((s, k) => s + k.nominal, 0) || 0;
     const totalKasAll = kasMasuk - kasKeluar;
 

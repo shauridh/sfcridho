@@ -73,7 +73,7 @@ interface CloseProps {
   totalTransaksiHariIni: number;
   totalNominalHariIni: number;
   totalQrisHariIni: number;
-  onTutup: (uangAmbil: number, pengeluaran: number, omsetQris: number) => Promise<{ error: any }>;
+  onTutup: (uangAmbil: number, pengeluaran: number, totalQris: number) => Promise<{ error: any }>;
   onClose: () => void;
   loading: boolean;
 }
@@ -86,13 +86,12 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
   const uangDiDrawer = shift.uang_buka + totalNominalHariIni;
   const ambil = parseInt(uangAmbil.replace(/[^0-9]/g, ""), 10) || 0;
   const pengeluaranVal = parseInt(pengeluaran.replace(/[^0-9]/g, ""), 10) || 0;
-  const omsetTotal = ambil + totalQrisHariIni;
   const sisaDrawer = uangDiDrawer - ambil - pengeluaranVal;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (ambil < 0 || ambil > uangDiDrawer) { setError("Nominal tidak valid"); return; }
-    const { error: err } = await onTutup(ambil, pengeluaranVal, omsetTotal);
+    const { error: err } = await onTutup(ambil, pengeluaranVal, totalQrisHariIni);
     if (err) setError("Gagal menutup shift");
   };
 
@@ -137,19 +136,20 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
             <div className="w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30 border th-border rounded-xl text-xl font-bold text-blue-700 dark:text-blue-300 text-center">
               {formatRupiah(totalQrisHariIni)}
             </div>
-            <p className="text-xs th-muted mt-1">Akan masuk ke akun Seabank otomatis</p>
+            <p className="text-xs th-muted mt-1">Akan ditransfer ke akun Seabank secara manual</p>
           </div>
 
           <div>
             <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Uang yang Diambil (Rp)</label>
             <input type="text" inputMode="numeric" value={uangAmbil} onChange={(e) => { setUangAmbil(e.target.value); setError(""); }} autoFocus className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
+            <p className="text-xs th-muted mt-1">Uang tunai yang dibawa pulang owner</p>
           </div>
 
-          {omsetTotal > 0 && (
-            <div className="bg-green-50 dark:bg-green-950/30 border th-border rounded-xl p-3 text-center">
-              <p className="text-xs th-muted">Omset Harian (Auto)</p>
-              <p className="text-xl font-bold text-success">{formatRupiah(omsetTotal)}</p>
-              <p className="text-[10px] text-green-500 mt-1">{formatRupiah(ambil)} + {formatRupiah(totalQrisHariIni)} (QRIS)</p>
+          {totalQrisHariIni > 0 && (
+            <div className="bg-blue-50 dark:bg-blue-950/30 border th-border rounded-xl p-3 text-center">
+              <p className="text-xs th-muted">QRIS Perlu Ditransfer</p>
+              <p className="text-xl font-bold text-blue-700 dark:text-blue-300">{formatRupiah(totalQrisHariIni)}</p>
+              <p className="text-[10px] text-blue-500 mt-1">Catat manual ke akun bank/ewallet</p>
             </div>
           )}
 
