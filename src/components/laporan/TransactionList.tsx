@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatRupiah, formatWaktu } from "@/lib/utils";
-import { Receipt, X, CreditCard, Banknote, QrCode } from "lucide-react";
+import { Receipt, X, CreditCard, Banknote, QrCode, Edit3 } from "lucide-react";
 
 interface TransaksiItem {
   id: string;
@@ -23,9 +23,10 @@ interface Transaksi {
 
 interface Props {
   transaksiList: Transaksi[];
+  onEdit?: (t: Transaksi) => void;
 }
 
-export default function TransactionList({ transaksiList }: Props) {
+export default function TransactionList({ transaksiList, onEdit }: Props) {
   const [selected, setSelected] = useState<Transaksi | null>(null);
 
   return (
@@ -136,6 +137,15 @@ export default function TransactionList({ transaksiList }: Props) {
                   <span className="text-success font-medium">{formatRupiah(selected.kembalian)}</span>
                 </div>
               </div>
+
+              {onEdit && (
+                <button
+                  onClick={() => { onEdit(selected); setSelected(null); }}
+                  className="w-full py-3 flex items-center justify-center gap-2 th-accent-bg text-white rounded-xl font-bold hover:opacity-90 transition-opacity touch-target"
+                >
+                  <Edit3 size={16} /> Edit Transaksi
+                </button>
+              )}
             </div>
           </div>
         </div>

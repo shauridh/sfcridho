@@ -10,6 +10,8 @@ import TransactionList from "@/components/laporan/TransactionList";
 import BestSellers from "@/components/laporan/BestSellers";
 import WeeklyTrend from "@/components/laporan/WeeklyTrend";
 import LoadingScreen from "@/components/LoadingScreen";
+import EditTransaksiModal from "@/components/EditTransaksiModal";
+import { supabase } from "@/lib/supabase";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Calendar, ArrowUpCircle, ArrowDownCircle, Banknote, QrCode, Wallet, Info } from "lucide-react";
 
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSaldoDetail, setShowSaldoDetail] = useState(false);
+  const [editingTransaksi, setEditingTransaksi] = useState<any>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -37,6 +40,19 @@ export default function DashboardPage() {
   const prevDay = () => setDate((d) => { const n = new Date(d); n.setDate(n.getDate() - 1); return n; });
   const nextDay = () => setDate((d) => { const n = new Date(d); n.setDate(n.getDate() + 1); return n; });
   const isToday = date.toDateString() === new Date().toDateString();
+
+  const handleEditTransaksi = async (id: string, bayar: number, metode: "tunai" | "qris") => {
+    const kembalian = bayar - editingTransaksi.total;
+    const { error } = await supabase
+      .from("transaksi")
+      .update({ bayar, kembalian, metode_bayar: metode })
+      .eq("id", id);
+    if (!error) {
+      setEditingTransaksi(null);
+      await fetchData();
+    }
+    return { error };
+  };
 
   if (loading || !data) {
     return <LoadingScreen label="Memuat dashboard..." />;
@@ -158,7 +174,15 @@ export default function DashboardPage() {
         <WeeklyTrend data={weeklyData} />
       </div>
 
-      <TransactionList transaksiList={data.transaksiList} />
+      <TransactionList transaksiList={data.transaksiList} onEdit={setEditingTransaksi} />
+
+      {editingTransaksi && (
+        <EditTransaksiModal
+          transaksi={editingTransaksi}
+          onSave={handleEditTransaksi}
+          onClose={() => setEditingTransaksi(null)}
+        />
+      )}
     </div>
   );
 }
