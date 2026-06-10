@@ -7,6 +7,7 @@ import { getSettings, updateSetting, sendWhatsApp, getWATemplates, saveWATemplat
 import { supabase } from "@/lib/supabase";
 import { AppUser, Akun, TIPE_AKUN_OPTIONS } from "@/lib/types";
 import { Store, Users, MessageCircle, Save, Plus, Edit3, Wallet, QrCode, Shield, FileText, Power } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
 
 export default function PengaturanPage() {
   const { currentUser } = useAuth();
@@ -301,7 +302,13 @@ export default function PengaturanPage() {
                     </td>
                   </tr>
                 ))}
-                {akunList.length === 0 && <tr><td colSpan={5} className="px-5 py-12 text-center th-muted text-sm">Belum ada media penyimpanan</td></tr>}
+                {akunList.length === 0 && (
+                  <tr>
+                    <td colSpan={5}>
+                      <EmptyState icon={Wallet} message="Belum ada media penyimpanan" action={{ label: "Tambah Akun", onClick: () => { setEditingAkun(null); setAkunForm({ nama: "", tipe: "kas_fisik", warna: "#6B7280" }); setShowAkunForm(true); } }} />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

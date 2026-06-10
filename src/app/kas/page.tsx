@@ -8,6 +8,7 @@ import { KATEGORI_KAS, Opex, Piutang, Akun } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { Plus, ArrowUpCircle, ArrowDownCircle, Trash2, ChevronLeft, ChevronRight, Calendar, Receipt, Repeat, CreditCard, TrendingDown, Wallet, CheckCircle2, Edit3, Info } from "lucide-react";
 import LoadingScreen from "@/components/LoadingScreen";
+import EmptyState from "@/components/EmptyState";
 
 type Tab = "overview" | "kas" | "opex" | "piutang";
 
@@ -339,7 +340,13 @@ export default function KasPage() {
                   </tr>
                   );
                 })}
-                {kasList.length === 0 && <tr><td colSpan={7} className="px-5 py-12 text-center th-muted text-sm">Belum ada catatan kas hari ini</td></tr>}
+                {kasList.length === 0 && (
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyState icon={Receipt} message="Belum ada catatan kas hari ini" />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -376,7 +383,13 @@ export default function KasPage() {
                     </td>
                   </tr>
                 ))}
-                {opexList.length === 0 && <tr><td colSpan={5} className="px-5 py-12 text-center th-muted text-sm">Belum ada data opex</td></tr>}
+                {opexList.length === 0 && (
+                  <tr>
+                    <td colSpan={5}>
+                      <EmptyState icon={TrendingDown} message="Belum ada data opex" />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -432,7 +445,13 @@ export default function KasPage() {
                     </td>
                   </tr>
                 ))}
-                {piutangList.length === 0 && <tr><td colSpan={9} className="px-5 py-12 text-center th-muted text-sm">Belum ada data hutang/piutang</td></tr>}
+                {piutangList.length === 0 && (
+                  <tr>
+                    <td colSpan={9}>
+                      <EmptyState icon={CreditCard} message="Belum ada data hutang/piutang" />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
