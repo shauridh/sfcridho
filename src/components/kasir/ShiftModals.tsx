@@ -73,25 +73,28 @@ interface CloseProps {
   totalTransaksiHariIni: number;
   totalNominalHariIni: number;
   totalQrisHariIni: number;
-  onTutup: (uangAmbil: number, pengeluaran: number, totalQris: number) => Promise<{ error: any }>;
+  kasKeluarHariIni: number;
+  onTutup: (uangAmbil: number, uangAktual: number, totalQris: number) => Promise<{ error: any }>;
   onClose: () => void;
   loading: boolean;
 }
 
-export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHariIni, totalQrisHariIni, onTutup, onClose, loading }: CloseProps) {
+export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHariIni, totalQrisHariIni, kasKeluarHariIni, onTutup, onClose, loading }: CloseProps) {
   const [uangAmbil, setUangAmbil] = useState("");
-  const [pengeluaran, setPengeluaran] = useState("");
+  const [uangAktual, setUangAktual] = useState("");
   const [error, setError] = useState("");
 
-  const uangDiDrawer = shift.uang_buka + totalNominalHariIni;
+  const uangSeharusnya = shift.uang_buka + totalNominalHariIni - kasKeluarHariIni;
   const ambil = parseInt(uangAmbil.replace(/[^0-9]/g, ""), 10) || 0;
-  const pengeluaranVal = parseInt(pengeluaran.replace(/[^0-9]/g, ""), 10) || 0;
-  const sisaDrawer = uangDiDrawer - ambil - pengeluaranVal;
+  const aktual = parseInt(uangAktual.replace(/[^0-9]/g, ""), 10) || 0;
+  const selisih = aktual - uangSeharusnya;
+  const sisaDrawer = aktual - ambil;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (ambil < 0 || ambil > uangDiDrawer) { setError("Nominal tidak valid"); return; }
-    const { error: err } = await onTutup(ambil, pengeluaranVal, totalQrisHariIni);
+    if (aktual <= 0) { setError("Masukkan uang aktual di drawer"); return; }
+    if (ambil < 0 || ambil > aktual) { setError("Uang ambil tidak valid"); return; }
+    const { error: err } = await onTutup(ambil, aktual, totalQrisHariIni);
     if (err) setError("Gagal menutup shift");
   };
 
@@ -112,48 +115,60 @@ export function ShiftCloseModal({ shift, totalTransaksiHariIni, totalNominalHari
               <p className="text-sm font-bold th-text">{formatRupiah(shift.uang_buka)}</p>
             </div>
             <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-3">
-              <p className="text-xs th-muted">Total Penjualan</p>
+              <p className="text-xs th-muted">Penjualan Tunai</p>
               <p className="text-sm font-bold text-success">{formatRupiah(totalNominalHariIni)}</p>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-3">
-              <p className="text-xs th-muted">Jumlah Transaksi</p>
-              <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{totalTransaksiHariIni}</p>
-            </div>
             <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl p-3">
-              <p className="text-xs th-muted">Uang di Drawer</p>
-              <p className="text-sm font-bold text-warning">{formatRupiah(uangDiDrawer)}</p>
+              <p className="text-xs th-muted">Kas Keluar</p>
+              <p className="text-sm font-bold text-warning">{formatRupiah(kasKeluarHariIni)}</p>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-3">
+              <p className="text-xs th-muted">Seharusnya</p>
+              <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatRupiah(uangSeharusnya)}</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Pengeluaran Hari Ini (Rp)</label>
-            <input type="text" inputMode="numeric" value={pengeluaran} onChange={(e) => { setPengeluaran(e.target.value); setError(""); }} className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
-            <p className="text-xs th-muted mt-1">Belanja kebutuhan dari drawer</p>
+            <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Uang Aktual di Drawer (Rp)</label>
+            <input type="text" inputMode="numeric" value={uangAktual} onChange={(e) => { setUangAktual(e.target.value); setError(""); }} autoFocus className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
+            <p className="text-xs th-muted mt-1">Hitung fisik uang tunai yang ada di laci sekarang</p>
           </div>
+
+          {aktual > 0 && (
+            <div className={`border th-border rounded-xl p-3 text-center ${
+              selisih === 0 ? "bg-green-50 dark:bg-green-950/30" :
+              selisih > 0 ? "bg-blue-50 dark:bg-blue-950/30" :
+              "bg-red-50 dark:bg-red-950/30"
+            }`}>
+              <p className="text-xs th-muted">Selisih</p>
+              <p className={`text-xl font-bold ${
+                selisih === 0 ? "text-success" :
+                selisih > 0 ? "text-blue-600 dark:text-blue-400" :
+                "text-danger"
+              }`}>
+                {selisih === 0 ? "Pas" : (selisih > 0 ? "+" : "") + formatRupiah(Math.abs(selisih))}
+              </p>
+              <p className="text-[10px] th-muted mt-0.5">
+                {selisih === 0 ? "Uang sesuai" : selisih > 0 ? "Lebih" : "Kurang"}
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold th-muted uppercase mb-1.5">QRIS Masuk (Otomatis)</label>
             <div className="w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30 border th-border rounded-xl text-xl font-bold text-blue-700 dark:text-blue-300 text-center">
               {formatRupiah(totalQrisHariIni)}
             </div>
-            <p className="text-xs th-muted mt-1">Akan ditransfer ke akun Seabank secara manual</p>
+            <p className="text-xs th-muted mt-1">Catat manual ke akun bank/ewallet</p>
           </div>
 
           <div>
             <label className="block text-xs font-semibold th-muted uppercase mb-1.5">Uang yang Diambil (Rp)</label>
-            <input type="text" inputMode="numeric" value={uangAmbil} onChange={(e) => { setUangAmbil(e.target.value); setError(""); }} autoFocus className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
+            <input type="text" inputMode="numeric" value={uangAmbil} onChange={(e) => { setUangAmbil(e.target.value); setError(""); }} className="w-full px-4 py-3 th-card border th-border rounded-xl text-xl font-bold th-text focus:outline-none focus:border-accent text-center" placeholder="0" />
             <p className="text-xs th-muted mt-1">Uang tunai yang dibawa pulang owner</p>
           </div>
 
-          {totalQrisHariIni > 0 && (
-            <div className="bg-blue-50 dark:bg-blue-950/30 border th-border rounded-xl p-3 text-center">
-              <p className="text-xs th-muted">QRIS Perlu Ditransfer</p>
-              <p className="text-xl font-bold text-blue-700 dark:text-blue-300">{formatRupiah(totalQrisHariIni)}</p>
-              <p className="text-[10px] text-blue-500 mt-1">Catat manual ke akun bank/ewallet</p>
-            </div>
-          )}
-
-          {(ambil > 0 || pengeluaranVal > 0) && (
+          {ambil > 0 && (
             <div className="bg-red-50 dark:bg-red-950/30 border th-border rounded-xl p-3 text-center">
               <p className="text-xs th-muted">Sisa di Drawer</p>
               <p className="text-xl font-bold th-accent">{formatRupiah(sisaDrawer)}</p>

@@ -56,16 +56,17 @@ export function useTotalSaldo() {
       }
     }
 
-    const kasMasuk = kasRes.data?.filter((k) => 
-      k.tipe === "masuk"
+    // Kas masuk/keluar yang TIDAK ditujukan ke akun (drawer saja)
+    const kasMasukDrawer = kasRes.data?.filter((k) => 
+      k.tipe === "masuk" && !k.tujuan_akun_id
     ).reduce((s, k) => {
       // Exclude omset harian yang sudah tercatat di transaksi
       if (k.keterangan?.includes("Omset harian")) return s;
       return s + k.nominal;
     }, 0) || 0;
     
-    const kasKeluar = kasRes.data?.filter((k) => k.tipe === "keluar").reduce((s, k) => s + k.nominal, 0) || 0;
-    const totalKasAll = kasMasuk - kasKeluar;
+    const kasKeluarDrawer = kasRes.data?.filter((k) => k.tipe === "keluar" && !k.sumber_akun_id).reduce((s, k) => s + k.nominal, 0) || 0;
+    const totalKasDrawer = kasMasukDrawer - kasKeluarDrawer;
 
     let akunBank = 0, akunEwallet = 0, akunKasFisik = 0;
     for (const akun of akunRes.data || []) {
@@ -80,17 +81,17 @@ export function useTotalSaldo() {
       else akunKasFisik += saldo;
     }
 
-    const total = drawerCash + totalKasAll + akunBank + akunEwallet + akunKasFisik;
+    const total = drawerCash + totalKasDrawer + akunBank + akunEwallet + akunKasFisik;
 
     setBreakdown({
       drawer: drawerCash,
       drawerFormatted: formatRupiah(drawerCash),
-      kasMasuk,
-      kasMasukFormatted: formatRupiah(kasMasuk),
-      kasKeluar,
-      kasKeluarFormatted: formatRupiah(kasKeluar),
-      kasManual: totalKasAll,
-      kasManualFormatted: formatRupiah(totalKasAll),
+      kasMasuk: kasMasukDrawer,
+      kasMasukFormatted: formatRupiah(kasMasukDrawer),
+      kasKeluar: kasKeluarDrawer,
+      kasKeluarFormatted: formatRupiah(kasKeluarDrawer),
+      kasManual: totalKasDrawer,
+      kasManualFormatted: formatRupiah(totalKasDrawer),
       akunBank,
       akunEwallet,
       akunKasFisik,

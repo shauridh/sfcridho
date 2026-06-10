@@ -140,7 +140,7 @@ export function formatLaporanWA(data: {
   kasMasuk: number;
   kasKeluar: number;
   metodeBayar?: { tunai: { count: number; total: number }; qris: { count: number; total: number } };
-  shiftInfo?: { uangBuka: number; uangAmbil: number; uangDrawer: number };
+  shiftInfo?: { uangBuka: number; uangAmbil: number; uangDrawer: number; uangAktual?: number; selisih?: number };
   stokOpname?: { nama: string; stok: number; sat: string; status: string }[];
 }): string {
   const lines: string[] = [];
@@ -177,6 +177,13 @@ export function formatLaporanWA(data: {
     lines.push(``);
     lines.push(`[Kasir]`);
     lines.push(`Uang Buka: Rp ${data.shiftInfo.uangBuka.toLocaleString("id-ID")}`);
+    if (data.shiftInfo.uangAktual !== undefined) {
+      lines.push(`Uang Aktual: Rp ${data.shiftInfo.uangAktual.toLocaleString("id-ID")}`);
+    }
+    if (data.shiftInfo.selisih !== undefined && data.shiftInfo.selisih !== 0) {
+      const label = data.shiftInfo.selisih > 0 ? "Lebih" : "Kurang";
+      lines.push(`Selisih: ${label} Rp ${Math.abs(data.shiftInfo.selisih).toLocaleString("id-ID")}`);
+    }
     lines.push(`Diambil: Rp ${data.shiftInfo.uangAmbil.toLocaleString("id-ID")}`);
     lines.push(`Sisa Drawer: Rp ${data.shiftInfo.uangDrawer.toLocaleString("id-ID")}`);
   }

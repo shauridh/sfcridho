@@ -48,7 +48,7 @@ export default function KasirPage() {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showOnlineOrders, setShowOnlineOrders] = useState(false);
   const [onlineDelivery, setOnlineDelivery] = useState(false);
-  const [shiftStats, setShiftStats] = useState({ totalTransaksi: 0, totalNominal: 0, totalQris: 0 });
+  const [shiftStats, setShiftStats] = useState({ totalTransaksi: 0, totalNominal: 0, totalQris: 0, kasKeluar: 0 });
   const [availableAddons, setAvailableAddons] = useState<Addon[]>([]);
   const [addonModal, setAddonModal] = useState<string | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
@@ -60,7 +60,22 @@ export default function KasirPage() {
     const { data } = await supabase.from("transaksi").select("total, metode_bayar").eq("shift_id", activeShift.id);
     const rows = (data || []) as { total: number; metode_bayar: string | null }[];
     const totalQris = rows.filter((t) => t.metode_bayar === "qris").reduce((s, t) => s + t.total, 0);
-    setShiftStats({ totalTransaksi: rows.length, totalNominal: rows.reduce((s, t) => s + t.total, 0), totalQris });
+    
+    // Hitung kas keluar dari drawer shift ini
+    const bukaAt = new Date(activeShift.buka_at);
+    const { data: kasData } = await supabase
+      .from("kas")
+      .select("nominal")
+      .eq("tipe", "keluar")
+      .gte("created_at", bukaAt.toISOString());
+    const kasKeluar = (kasData || []).reduce((s, k) => s + k.nominal, 0);
+    
+    setShiftStats({ 
+      totalTransaksi: rows.length, 
+      totalNominal: rows.reduce((s, t) => s + t.total, 0), 
+      totalQris,
+      kasKeluar 
+    });
   }, [activeShift]);
 
   useEffect(() => { fetchShiftStats(); }, [fetchShiftStats]);
@@ -152,72 +167,97 @@ export default function KasirPage() {
     if (rows.length > 0) await supabase.from("kategori_order").insert(rows);
   };
 
-  const handleCloseShift = async (uangAmbil: number, pengeluaran: number, totalQris: number) => {
+  const handleCloseShift = async (uangAmbil: number, uangAktual: number, totalQris: number) => {
     const shiftId = activeShift?.id;
-    const res = await tutupShift(uangAmbil);
-    if (!res.error) {
-      setShowCloseShift(false);
+    if (!activeShift) return { error: new Error("Tidak ada shift aktif") };
 
-      if (pengeluaran > 0) {
-        await supabase.from("kas").insert({
-          tipe: "keluar",
-          nominal: pengeluaran,
-          keterangan: `Pengeluaran hari ini — ${new Date().toLocaleDateString("id-ID")}`,
-          kategori: "Operasional",
-        });
-      }
+    const totalNominalTunai = shiftStats.totalNominal - shiftStats.totalQris;
+    const selisih = uangAktual - (activeShift.uang_buka + totalNominalTunai - shiftStats.kasKeluar);
+    
+    // Tutup shift dengan uang drawer = aktual - ambil
+    const { data: transaksiData } = await supabase
+      .from("transaksi")
+      .select("total")
+      .eq("shift_id", activeShift.id);
 
-      if (uangAmbil > 0) {
-        await supabase.from("kas").insert({
-          tipe: "keluar",
-          nominal: uangAmbil,
-          keterangan: `Penarikan kasir — ${new Date().toLocaleDateString("id-ID")}`,
-          kategori: "Penarikan Kasir",
-        });
-      }
+    const totalTransaksi = transaksiData?.length || 0;
+    const totalNominal = transaksiData?.reduce((s, t) => s + t.total, 0) || 0;
+    const uangDrawer = uangAktual - uangAmbil;
 
-      try {
-        const settings = await getSettings();
-        const apiKey = settings.wa_api_key;
-        const phone = settings.wa_phone;
+    const { error } = await supabase
+      .from("shift")
+      .update({
+        tutup_at: new Date().toISOString(),
+        uang_drawer: uangDrawer,
+        uang_ambil: uangAmbil,
+        total_transaksi: totalTransaksi,
+        total_nominal: totalNominal,
+        status: "closed",
+      })
+      .eq("id", activeShift.id);
 
-        if (apiKey && phone) {
-          const laporan = await getLaporanHariIni();
-          const storeName = settings.store_name || "Sabana FC";
+    if (error) return { error };
+    setShowCloseShift(false);
 
-          const { data: stokData } = await supabase.from("bahan_baku").select("nama, stok, sat_dasar, reorder_point").order("nama");
-          const stokOpname = (stokData || []).map((b: any) => ({
-            nama: b.nama,
-            stok: b.stok,
-            sat: b.sat_dasar,
-            status: b.stok <= 0 ? "habis" : b.stok <= b.reorder_point * 0.5 ? "kritis" : b.stok <= b.reorder_point ? "rendah" : "aman",
-          }));
-
-          const msg = formatLaporanWA({
-            storeName,
-            date: new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
-            totalOmzet: laporan.totalOmzet,
-            jumlahTransaksi: laporan.jumlahTransaksi,
-            rataRata: laporan.rataRata,
-            bestSellers: laporan.bestSellersList || [],
-kasMasuk: 0,
-             kasKeluar: 0,
-             metodeBayar: (laporan as any).metodeBayar,
-             shiftInfo: shiftId ? { uangBuka: activeShift?.uang_buka || 0, uangAmbil, uangDrawer: (activeShift?.uang_buka || 0) + laporan.totalOmzet - uangAmbil } : undefined,
-            stokOpname,
-          });
-          const waResult = await sendWhatsApp(msg);
-          console.log("WA send result:", waResult);
-        } else {
-          console.log("WA not configured: api_key or phone missing");
-        }
-      } catch (err) {
-        console.error("WA notification error:", err);
-      }
-
-      router.push("/dashboard");
+    // Catat penarikan owner
+    if (uangAmbil > 0) {
+      await supabase.from("kas").insert({
+        tipe: "keluar",
+        nominal: uangAmbil,
+        keterangan: `Penarikan kasir — ${new Date().toLocaleDateString("id-ID")}`,
+        kategori: "Penarikan Kasir",
+      });
     }
-    return res;
+    
+    // Catat selisih jika ada
+    if (selisih !== 0) {
+      await supabase.from("kas").insert({
+        tipe: selisih > 0 ? "masuk" : "keluar",
+        nominal: Math.abs(selisih),
+        keterangan: `Selisih tutup kasir ${selisih > 0 ? "(lebih)" : "(kurang)"} — ${new Date().toLocaleDateString("id-ID")}`,
+        kategori: "Selisih Kas",
+      });
+    }
+
+    try {
+      const settings = await getSettings();
+      const apiKey = settings.wa_api_key;
+      const phone = settings.wa_phone;
+
+      if (apiKey && phone) {
+        const laporan = await getLaporanHariIni();
+        const storeName = settings.store_name || "Sabana FC";
+
+        const msg = formatLaporanWA({
+          storeName,
+          date: new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+          totalOmzet: laporan.totalOmzet,
+          jumlahTransaksi: laporan.jumlahTransaksi,
+          rataRata: laporan.rataRata,
+          bestSellers: laporan.bestSellersList || [],
+          kasMasuk: 0,
+          kasKeluar: shiftStats.kasKeluar,
+          metodeBayar: (laporan as any).metodeBayar,
+          shiftInfo: { 
+            uangBuka: activeShift.uang_buka, 
+            uangAmbil, 
+            uangDrawer, 
+            uangAktual,
+            selisih 
+          },
+          stokOpname: [],
+        });
+        const waResult = await sendWhatsApp(msg);
+        console.log("WA send result:", waResult);
+      } else {
+        console.log("WA not configured: api_key or phone missing");
+      }
+    } catch (err) {
+      console.error("WA notification error:", err);
+    }
+
+    router.push("/dashboard");
+    return { error: null };
   };
 
   if (loadingProduk || loadingShift) {
@@ -291,8 +331,9 @@ kasMasuk: 0,
         <ShiftCloseModal
           shift={activeShift}
           totalTransaksiHariIni={shiftStats.totalTransaksi}
-          totalNominalHariIni={shiftStats.totalNominal}
+          totalNominalHariIni={shiftStats.totalNominal - shiftStats.totalQris}
           totalQrisHariIni={shiftStats.totalQris}
+          kasKeluarHariIni={shiftStats.kasKeluar}
           onTutup={handleCloseShift}
           onClose={() => setShowCloseShift(false)}
           loading={false}
