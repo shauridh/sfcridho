@@ -11,6 +11,7 @@ import Cart from "@/components/kasir/Cart";
 import PaymentModal from "@/components/kasir/PaymentModal";
 import ReceiptStruk from "@/components/kasir/ReceiptStruk";
 import KategoriBar from "@/components/kasir/KategoriBar";
+import SortControl from "@/components/kasir/SortControl";
 import OnlineOrders from "@/components/kasir/OnlineOrders";
 import LoadingScreen from "@/components/LoadingScreen";
 import { ShiftOpenModal, ShiftCloseModal } from "@/components/kasir/ShiftModals";
@@ -54,6 +55,8 @@ export default function KasirPage() {
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [showSaldoDetail, setShowSaldoDetail] = useState(false);
   const { breakdown } = useTotalSaldo();
+  const [sortField, setSortField] = useState<"nama" | "harga" | "kategori">("nama");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const fetchShiftStats = useCallback(async () => {
     if (!activeShift) return;
@@ -122,7 +125,31 @@ export default function KasirPage() {
     return (item.produk.harga + addonTotal) * item.qty;
   };
 
-  const filteredProduk = filterKategori === "Semua" ? activeProduk : activeProduk.filter((p) => p.kategori === filterKategori);
+  const filteredProduk = useMemo(() => {
+    let list = filterKategori === "Semua" ? activeProduk : activeProduk.filter((p) => p.kategori === filterKategori);
+    // Sort
+    list = [...list].sort((a, b) => {
+      let valA: string | number, valB: string | number;
+      if (sortField === "harga") {
+        valA = a.harga;
+        valB = b.harga;
+      } else if (sortField === "kategori") {
+        valA = a.kategori;
+        valB = b.kategori;
+      } else {
+        valA = a.nama;
+        valB = b.nama;
+      }
+      if (typeof valA === "number" && typeof valB === "number") {
+        return sortOrder === "asc" ? valA - valB : valB - valA;
+      }
+      const strA = String(valA).toLowerCase();
+      const strB = String(valB).toLowerCase();
+      return sortOrder === "asc" ? strA.localeCompare(strB) : strB.localeCompare(strA);
+    });
+    return list;
+  }, [activeProduk, filterKategori, sortField, sortOrder]);
+  
   const total = cart.reduce((sum, item) => sum + getCartItemPrice(item), 0);
 
   const addToCart = (produkId: string, addons?: { id: string; nama: string; harga: number }[]) => {
@@ -271,16 +298,24 @@ export default function KasirPage() {
   return (
     <div className="flex h-full relative">
       <div className="flex-1 flex flex-col overflow-hidden p-3 md:p-4">
-        <div className="flex items-center gap-2 mb-3 md:mb-4">
-          <KategoriBar kategoriList={kategoriList} active={filterKategori} onSelect={setFilterKategori} onReorder={handleReorderKategori} />
-          {onlineDelivery && (
-            <button
-              onClick={() => setShowOnlineOrders(!showOnlineOrders)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors touch-target ${showOnlineOrders ? "th-accent-bg text-white" : "th-card border th-border th-muted hover:th-text"}`}
-            >
-              <Globe size={14} /> Online
-            </button>
-          )}
+        <div className="space-y-2 mb-3 md:mb-4">
+          <div className="flex items-center gap-2">
+            <KategoriBar kategoriList={kategoriList} active={filterKategori} onSelect={setFilterKategori} onReorder={handleReorderKategori} />
+            {onlineDelivery && (
+              <button
+                onClick={() => setShowOnlineOrders(!showOnlineOrders)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors touch-target ${showOnlineOrders ? "th-accent-bg text-white" : "th-card border th-border th-muted hover:th-text"}`}
+              >
+                <Globe size={14} /> Online
+              </button>
+            )}
+          </div>
+          <SortControl 
+            field={sortField} 
+            order={sortOrder} 
+            onChangeField={setSortField} 
+            onToggleOrder={() => setSortOrder(o => o === "asc" ? "desc" : "asc")} 
+          />
         </div>
 
         {showOnlineOrders && (
