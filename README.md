@@ -46,10 +46,12 @@ Setelah migration 025, user default punya PIN yang sudah di-hash. User awal (lih
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
-npm run build    # build produksi
-npm run start    # jalankan hasil build
-npm run lint     # ESLint
+npm run dev         # http://localhost:3000
+npm run build       # build produksi
+npm run start       # jalankan hasil build
+npm run lint        # ESLint
+npm test            # Vitest unit tests
+npm run test:watch  # Vitest watch mode
 ```
 
 ## Struktur
@@ -57,28 +59,58 @@ npm run lint     # ESLint
 ```
 src/
   app/            # routes (App Router)
-    api/          # API routes (whatsapp proxy, orders)
+    api/          # API routes (whatsapp proxy, orders/confirm)
     kasir/        # halaman kasir / POS
     stok/         # manajemen bahan baku + forecasting
     kas/          # kas, opex, piutang/hutang
     order/        # halaman publik order online (tanpa login)
     pengaturan/   # konfigurasi toko, user, WA, QRIS, PIN
     dashboard/    # ringkasan & laporan
-  components/     # komponen UI (modal, form, nav, dll.)
+  components/     # komponen UI (modal, form, nav, loading, empty state)
   hooks/          # data hooks (useStok, useTransaksi, useKas, dll.)
-  lib/            # supabase client, types, utils, whatsapp, qris
+  lib/            # supabase, types, utils, whatsapp, qris, forecast
+    *.test.ts     # unit tests (Vitest)
 supabase/
-  migrations/     # SQL migrations (jalankan berurutan)
+  migrations/     # SQL migrations (jalankan berurutan 001-027)
 ```
+
+## Testing
+
+Proyek ini menggunakan **Vitest** untuk unit testing. Test coverage saat ini:
+
+- `lib/utils.test.ts` — formatting (Rupiah, angka, stok), parsing, konversi satuan (11 test)
+- `lib/types.test.ts` — status stok (aman/rendah/kritis/habis) (5 test)
+- `lib/forecast.test.ts` — logika forecasting stok (sisa hari, reorder qty, urgent, estimasi) (9 test)
+
+**Total: 25 test**. Jalankan dengan `npm test` atau `npm run test:watch`.
 
 ## Catatan Keamanan
 
 - PIN di-hash dengan bcrypt (pgcrypto). Semua operasi tulis ke `app_users` lewat RPC `SECURITY DEFINER`, bukan akses tabel langsung.
 - Kredensial WhatsApp (`wa_api_key`) di-resolve server-side di `/api/whatsapp` dan tidak pernah dikirim dari browser.
 - Halaman publik `/order` hanya membaca setting non-sensitif via `get_public_settings()`.
+- Stok divalidasi di RPC `process_transaction` sebelum deduct (migration 026) — transaksi ditolak jika stok tidak cukup.
 
 **Keterbatasan saat ini:** aplikasi belum memakai Supabase Auth sungguhan — sebagian besar tabel masih bisa diakses memakai anon key. Untuk produksi dengan data sensitif, migrasikan ke Supabase Auth dan terapkan RLS berbasis `auth.uid()`. Lihat `TODO.md`.
+
+## UI/UX
+
+- **Loading state konsisten** — `LoadingScreen` dengan spinner dipakai di semua halaman (dashboard, stok, kasir, kas, produk).
+- **Empty state konsisten** — `EmptyState` dengan ikon & pesan untuk tabel/list kosong (pengaturan akun, kas, opex, piutang).
+- **Alert banner dismissible** — peringatan stok kritis bisa ditutup dan diingat di localStorage.
+- **Aksesibilitas** — `aria-label` pada tombol ikon-only, `next/image` untuk optimasi foto produk.
+- **Ikon konsisten** — Lock (tutup kasir), Power (toggle aktif/nonaktif), bukan ikon menyesatkan.
 
 ## Deploy
 
 Deploy ke Vercel. Set semua environment variable di atas (termasuk `SUPABASE_SERVICE_ROLE_KEY`) di dashboard Vercel sebelum deploy.
+
+## Kontribusi & Development
+
+1. Clone repo dan install dependencies: `npm install`
+2. Jalankan migration database (001-027) di Supabase SQL Editor
+3. Set `.env.local` dengan kredensial Supabase
+4. `npm run dev` untuk development
+5. `npm test` sebelum commit — pastikan semua test hijau
+6. `npm run lint` — pastikan tidak ada warning/error
+7. Commit dengan konvensi: `feat:`, `fix:`, `test:`, `perf:`, `refactor:`, `docs:`
